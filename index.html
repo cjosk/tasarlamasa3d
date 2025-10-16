@@ -157,7 +157,7 @@
         <header class="p-3 shadow-2xl flex justify-between items-center text-white sticky top-0 z-20 h-16 bg-dark-bg/80 backdrop-blur-md">
             <div class="flex items-center">
                 <img src="https://neonbirr.com/cdn/shop/files/cropped-cropped-Yeni-Proje-24.webp?v=1696324634&width=90" alt="Neon Masa Logo" class="h-8 mr-4 rounded-lg shadow-xl">
-                <h1 class="text-xl font-light text-white tracking-wide">Neon Masa | Spatial Konfigüratör</h1>
+                <!-- Kullanıcı isteği üzerine başlık metni kaldırıldı -->
             </div>
             <div id="user-info" class="text-xs px-4 py-2 rounded-full bg-glass-surface border border-glass-border/70 transform transition-transform duration-200 hover:scale-[1.02]">
                 <span class="text-gray-400">Kullanıcı ID:</span> <span id="user-id-display" class="font-mono text-neon-accent font-medium">Yükleniyor...</span>
@@ -335,7 +335,7 @@
                 </button>
             </div>
         </div>
-    </div
+    </div>
 
     <script type="module">
         // Global Three.js değişkenleri
@@ -424,12 +424,11 @@
             document.getElementById('modal-container').classList.remove('hidden');
         }
 
-        /** Firebase'i başlatır ve kullanıcıyı oturum açar */
+        /** Firebase'i başlatır ve kullanıcıyı oturum açar (Sadece data yüklemek için kullanılır) */
         async function initializeFirebase() {
             if (Object.keys(firebaseConfig).length === 0) {
                 console.error("Firebase config is missing. Using anonymous setup.");
                 document.getElementById('user-id-display').textContent = 'Anonim (Kaydetme Devre Dışı)';
-                initThreeJS(); 
                 return;
             }
 
@@ -445,22 +444,21 @@
                     await signInAnonymously(auth);
                 }
 
+                // Auth durumu belirlendikten sonra UID'yi ayarla ve veriyi yükle
                 onAuthStateChanged(auth, (user) => {
                     if (user) {
                         userId = user.uid;
                         document.getElementById('user-id-display').textContent = userId.substring(0, 6) + '...';
-                        initThreeJS(); 
                     } else {
                         userId = crypto.randomUUID();
                         document.getElementById('user-id-display').textContent = `Anonim ID: ${userId.substring(0, 6)}...`;
-                        initThreeJS();
                     }
+                    loadUserDesign(); // Sahne kurulduktan sonra veriyi yükle
                 });
 
             } catch (error) {
                 console.error("Firebase başlatma hatası:", error);
                 showModal("Hata", "Firebase başlatılamadı. Tasarım kaydetme çalışmayabilir.");
-                initThreeJS(); 
             }
         }
 
@@ -474,6 +472,7 @@
             TABLE_FRAME_HEIGHT = currentSize.height;
             WORKING_PLANE_HEIGHT = TABLE_FRAME_HEIGHT - BASE_THICKNESS;
             
+            // Yükleme ekranını gizle ve sahneyi başlat
             document.getElementById('loading-overlay').classList.add('hidden');
             const container = document.getElementById('scene-container');
             
@@ -508,11 +507,10 @@
             
             createTable();
             
+            // UI elemanlarını sadece bir kez kur
             if (!document.getElementById('size-selector').children.length) {
                 setupUI();
             }
-
-            loadUserDesign(userId);
             
             animate();
 
@@ -1239,7 +1237,16 @@ Lütfen en kısa zamanda benimle iletişime geçin. (Tasarım ID: ${userId})`;
             }
         }
 
-        window.onload = initializeFirebase;
+        // Uygulamanın başlatılması için yeni ana fonksiyon
+        function startApplication() {
+            // 1. Sahneyi ve UI'ı hemen başlat (Yüklenme ekranını kapatır)
+            initThreeJS();
+
+            // 2. Firebase'i başlat ve veriyi yükle (UI yüklendikten sonra)
+            initializeFirebase();
+        }
+
+        window.onload = startApplication;
     </script>
 </body>
 </html>
