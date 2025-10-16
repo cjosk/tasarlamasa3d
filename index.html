@@ -122,11 +122,11 @@
             }
             #controls-wrapper {
                 width: 100%;
-                max-height: 50vh; /* Mobil cihazlarda daha küçük kontrol alanı */
+                max-height: 60vh; /* Mobil cihazlarda daha fazla kontrol alanı */
                 border-radius: 20px 20px 0 0;
             }
             #scene-container {
-                height: 50vh; 
+                height: 40vh; /* Sahneye biraz daha az yer */
             }
         }
         
@@ -168,19 +168,19 @@
         <main class="flex-grow flex">
 
             <!-- Kontrol Paneli (Sol Kenar Çubuğu - Glassmorphism Kart) -->
-            <!-- Genişlik: lg:w-96'dan lg:w-1/3'e genişletildi, max-w-sm eklendi -->
-            <div id="controls-wrapper" class="w-full lg:w-1/3 max-w-sm md:max-w-md p-4 lg:p-6 ui-card flex flex-col z-10">
+            <!-- Genişlik: Desktop'ta 380px, mobil cihazlarda tam genişlik. -->
+            <div id="controls-wrapper" class="w-full lg:w-[380px] max-w-lg p-4 lg:p-6 ui-card flex flex-col z-10">
                 
                 <h2 class="text-2xl font-semibold mb-4 text-white">Tasarım Kontrolleri</h2>
                 
                 <!-- Kaydırılabilir Alan -->
-                <div id="controls-scroll-area" class="flex-grow overflow-y-auto pr-2 space-y-6">
+                <div id="controls-scroll-area" class="flex-grow overflow-y-auto pr-2 space-y-6 pb-6">
                     
-                    <!-- 1. Ebat Seçimi Modülü (Butonlar JS ile Eklenecek) -->
+                    <!-- 1. Ebat Seçimi Modülü (Butonlu hale getirildi) -->
                     <div class="glass-module p-4 rounded-xl shadow-xl space-y-4">
                         <label class="block text-lg font-bold text-neon-accent">1. Masa Ebatını Seçin</label>
                         <div id="size-selector" class="space-y-3">
-                            <!-- Boyut Butonları JS ile Eklenecek (Artık butondur) -->
+                            <!-- Boyut Butonları JS ile Eklenecek -->
                         </div>
                     </div>
 
@@ -195,7 +195,7 @@
                     <!-- 3. Şekil Kütüphanesi Modülü -->
                     <div class="space-y-3">
                         <button id="toggle-shapes" class="w-full bg-primary-apple/80 hover:bg-primary-apple text-white font-bold py-3 px-4 rounded-xl transition duration-200 flex justify-between items-center shadow-lg transform hover:scale-[1.01]">
-                            <span class="text-lg">3. Şekil Ekle / Kütüphane</span>
+                            <span class="text-lg">3. Şekil Ekle / Kütüphanesi</span>
                             <svg id="shapes-arrow" class="w-5 h-5 transform transition-transform duration-300 rotate-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                         </button>
                         
@@ -287,24 +287,26 @@
                             </button>
                         </div>
                     </div>
-                </div>
+                    
+                    <!-- Ödeme Modülü (Artık Kaydırılabilir İçerik) -->
+                    <div class="pt-6 mt-4 border-t border-glass-border/50">
+                        <!-- Fiyat Gösterimi (Apple Style) -->
+                        <div class="text-center mb-3 p-3 bg-glass-surface rounded-xl shadow-inner">
+                            <p class="text-md font-light text-gray-300">Toplam Konfigürasyon Fiyatı:</p>
+                            <p id="current-price-final" class="text-4xl font-extrabold text-white mt-1 tracking-wider">20.000 TL</p>
+                        </div>
 
-                <!-- Ödeme Modülü (Sticky Footer - Minimalist) -->
-                <div class="pt-6 mt-4 border-t border-glass-border/50">
-                    <!-- Fiyat Gösterimi (Apple Style) -->
-                    <div class="text-center mb-3 p-3 bg-glass-surface rounded-xl shadow-inner">
-                        <p class="text-md font-light text-gray-300">Toplam Konfigürasyon Fiyatı:</p>
-                        <p id="current-price-final" class="text-4xl font-extrabold text-white mt-1 tracking-wider">20.000 TL</p>
+                        <!-- WhatsApp Sipariş Butonu -->
+                        <button id="order-whatsapp" class="w-full bg-[#25D366] hover:bg-[#128C7E] text-white font-bold py-4 px-4 rounded-xl text-xl transition duration-150 shadow-2xl shadow-[#25D366]/50 flex items-center justify-center transform hover:scale-[1.02]">
+                            <svg class="w-6 h-6 mr-2" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M12.039 2c-5.584 0-10.126 4.542-10.126 10.126 0 1.748.44 3.421 1.284 4.887l-1.34 4.904 5.025-1.315c1.42.54 3.09 1.284 4.837 1.284h.01c5.584 0 10.126-4.542 10.126-10.126s-4.542-10.126-10.126-10.126zm0 18.42c-2.88 0-5.55-.916-7.85-2.52l-.56-.334-3.13.82.83-3.045-.357-.577c-1.64-2.483-2.5-5.32-2.5-8.26 0-4.634 3.766-8.4 8.4-8.4s8.4 3.766 8.4 8.4-3.766 8.4-8.4 8.4zm4.456-6.19c-.244-.122-.962-.477-1.11-.532-.148-.054-.256-.08-.363.08-.107.155-.417.532-.51.64-.093.107-.186.12-.34.037-.154-.08-2.618-1.615-4.997-3.084-.397-.243-.666-.41-2.843-1.745-.246-.145-.353-.2-.407-.225-.053-.027-.42-.032-.816-.032-.397 0-.962.122-1.306.61-.345.488-1.307 1.272-1.307 3.107 0 1.835 1.522 3.593 1.522 3.84 0 .002.396.488.908 1.05.512.56.962.748 1.805.975.842.227 1.73.197 2.37.133.64-.06 1.87-.76 2.14-1.503.268-.743.268-1.373.185-1.503-.082-.13-.148-.155-.303-.236z"/>
+                            </svg>
+                            SİPARİŞİ TAMAMLA (WhatsApp)
+                        </button>
                     </div>
-
-                    <!-- WhatsApp Sipariş Butonu -->
-                    <button id="order-whatsapp" class="w-full bg-[#25D366] hover:bg-[#128C7E] text-white font-bold py-4 px-4 rounded-xl text-xl transition duration-150 shadow-2xl shadow-[#25D366]/50 flex items-center justify-center transform hover:scale-[1.02]">
-                        <svg class="w-6 h-6 mr-2" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M12.039 2c-5.584 0-10.126 4.542-10.126 10.126 0 1.748.44 3.421 1.284 4.887l-1.34 4.904 5.025-1.315c1.42.54 3.09 1.284 4.837 1.284h.01c5.584 0 10.126-4.542 10.126-10.126s-4.542-10.126-10.126-10.126zm0 18.42c-2.88 0-5.55-.916-7.85-2.52l-.56-.334-3.13.82.83-3.045-.357-.577c-1.64-2.483-2.5-5.32-2.5-8.26 0-4.634 3.766-8.4 8.4-8.4s8.4 3.766 8.4 8.4-3.766 8.4-8.4 8.4zm4.456-6.19c-.244-.122-.962-.477-1.11-.532-.148-.054-.256-.08-.363.08-.107.155-.417.532-.51.64-.093.107-.186.12-.34.037-.154-.08-2.618-1.615-4.997-3.084-.397-.243-.666-.41-2.843-1.745-.246-.145-.353-.2-.407-.225-.053-.027-.42-.032-.816-.032-.397 0-.962.122-1.306.61-.345.488-1.307 1.272-1.307 3.107 0 1.835 1.522 3.593 1.522 3.84 0 .002.396.488.908 1.05.512.56.962.748 1.805.975.842.227 1.73.197 2.37.133.64-.06 1.87-.76 2.14-1.503.268-.743.268-1.373.185-1.503-.082-.13-.148-.155-.303-.236z"/>
-                        </svg>
-                        SİPARİŞİ TAMAMLA (WhatsApp)
-                    </button>
                 </div>
+
+                <!-- Ödeme Modülü buradaydı, artık kaydırılabilir alanın içinde -->
             </div>
 
             <!-- 3D Sahne Konteyneri (Değişmeyen Alan) -->
@@ -333,7 +335,7 @@
                 </button>
             </div>
         </div>
-    </div>
+    </div
 
     <script type="module">
         // Global Three.js değişkenleri
