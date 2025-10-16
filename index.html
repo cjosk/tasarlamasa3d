@@ -3,13 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D Neon Masa Tasarımcısı</title>
+    <title>Neon Masa Konfigüratörü | Premium Tasarım</title>
     <!-- Tailwind CSS ve Inter Font Yükleniyor -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
             theme: {
                 extend: {
+                    colors: {
+                        'primary-neon': '#00F0FF', // Parlak Mavi/Cyan
+                        'brand-purple': '#5B21B6', // Koyu Mor
+                        'brand-indigo': '#4F46E5', // Koyu İndigo
+                        'dark-bg': '#111827', // Ana Arka Plan
+                        'card-bg': '#1F2937', // Kontrol Kartı Arka Planı
+                        'deep-card': '#374151', // Derin Kontrol Arka Planı
+                    },
                     fontFamily: {
                         sans: ['Inter', 'sans-serif'],
                     },
@@ -44,49 +52,100 @@
         window.setLogLevel = setLogLevel;
     </script>
     <style>
-        /* Özelleştirilmiş oyun/simülasyon stilleri */
+        /* Ana Tema Stilleri */
         body {
             overflow: hidden;
-            background-color: #1a1a1a; /* Koyu tema 3D görünüme daha iyi uyar */
+            background-color: #1a1a1a;
         }
         #scene-container {
             width: 100%;
-            height: calc(100vh - 120px); /* Üst/alt UI için yer bırak */
+            height: calc(100vh - 64px); 
         }
         canvas {
             display: block;
         }
         .ui-card {
-            background-color: #2d3748; /* Koyu mavi/gri */
-            color: #e2e8f0;
+            background-color: #1F2937; /* Card Arka Planı */
+            color: #E5E7EB; /* Açık Gri Font */
+            /* Kaydırma sorununu çözmek için kesin yükseklik ve kaydırma ayarı */
+            height: calc(100vh - 64px); 
         }
+        
+        /* Neon Renk Seçici Stilizasyonu */
         .neon-color-button {
-            width: 30px;
-            height: 30px;
+            width: 36px;
+            height: 36px;
             border: 3px solid transparent;
-            transition: transform 0.1s;
+            transition: transform 0.1s, box-shadow 0.2s;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
         }
         .neon-color-button.selected {
-            border-color: white;
-            transform: scale(1.1);
+            border-color: #E5E7EB;
+            transform: scale(1.15);
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.9);
         }
-        /* Yeni Radio button stilizasyonu */
+
+        /* Radio button stilizasyonu (Boyut Seçici) */
         .size-label {
-            @apply w-full block bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg cursor-pointer transition duration-150;
+            @apply w-full block bg-deep-card hover:bg-gray-600 text-white font-semibold py-3 px-4 rounded-xl cursor-pointer transition duration-150 shadow-md border border-deep-card;
         }
         .size-radio:checked + .size-label {
-            @apply bg-teal-500 hover:bg-teal-600;
+            @apply bg-brand-indigo hover:bg-brand-purple shadow-xl border-2 border-primary-neon;
         }
+        
+        /* Scrollbar İyileştirmesi */
+        #controls {
+            scrollbar-width: thin;
+            scrollbar-color: #4B5563 #1F2937;
+        }
+        #controls::-webkit-scrollbar {
+            width: 8px;
+        }
+        #controls::-webkit-scrollbar-thumb {
+            background-color: #4B5563;
+            border-radius: 10px;
+        }
+        #controls::-webkit-scrollbar-track {
+            background: #1F2937;
+        }
+
+        /* Range Input Stilizasyonu (Apple/Google Tarzı Slider) */
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            background: #00F0FF; /* Primary Neon */
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 5px rgba(0, 240, 255, 0.8);
+            margin-top: -6px; /* İpucu: Chrome için kaydırıcıyı ortala */
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            background: #4B5563; /* Koyu gri iz */
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        input[type=range] {
+             /* İpucu: Firefox için kaydırıcıyı ortala */
+            height: 12px;
+            background: transparent;
+        }
+
     </style>
 </head>
 <body class="font-sans">
 
     <!-- Ana Konteyner -->
     <div class="h-screen flex flex-col">
-        <!-- Başlık ve Kullanıcı Bilgisi -->
-        <header class="bg-gray-800 p-4 shadow-lg flex justify-between items-center text-white">
-            <h1 class="text-2xl font-bold text-teal-400">Neon Masa Tasarımcısı (3D)</h1>
-            <div id="user-info" class="text-sm">
+        <!-- Başlık ve Kullanıcı Bilgisi (Yüksek Kontrastlı Header) -->
+        <header class="bg-dark-bg p-3 shadow-2xl flex justify-between items-center text-white sticky top-0 z-20">
+            <div class="flex items-center">
+                <img src="https://neonbirr.com/cdn/shop/files/cropped-cropped-Yeni-Proje-24.webp?v=1696324634&width=90" alt="Neon Masa Logo" class="h-8 mr-3 rounded-md shadow-lg">
+                <h1 class="text-xl font-extrabold text-primary-neon tracking-wider">MÜKEMMEL NEON MASA KONFİGÜRATÖRÜ</h1>
+            </div>
+            <div id="user-info" class="text-xs hidden sm:block bg-deep-card/50 px-3 py-1 rounded-full border border-gray-600">
                 Kullanıcı ID: <span id="user-id-display" class="font-mono text-yellow-400">Yükleniyor...</span>
             </div>
         </header>
@@ -94,123 +153,148 @@
         <!-- Ana İçerik ve Kontroller -->
         <main class="flex-grow flex">
             <!-- Kontrol Paneli (Sol Kenar Çubuğu) -->
-            <div id="controls" class="w-1/4 max-w-xs p-4 ui-card overflow-y-auto">
-                <h2 class="text-xl font-semibold mb-4 border-b pb-2 border-gray-600">Tasarım Kontrolleri</h2>
+            <div id="controls" class="w-1/4 max-w-xs p-4 ui-card overflow-y-auto flex flex-col space-y-6">
                 
-                <!-- Seçili Neon Bilgisi -->
-                <div id="selected-element-info" class="mb-4 p-3 bg-gray-700 rounded-lg hidden">
-                    <p class="font-bold text-teal-300 mb-2">Seçili Öğeyi Düzenle</p>
+                <h2 class="text-2xl font-bold border-b pb-2 border-brand-indigo text-white mb-2">Tasarım Akışı</h2>
+                
+                <!-- 1. Renk Seçimi -->
+                <div class="bg-deep-card p-4 rounded-xl shadow-2xl">
+                    <label class="block text-xl font-bold mb-3 text-primary-neon border-b border-gray-600 pb-2">1. Rengi Seçin</label>
+                    <div id="color-picker" class="flex gap-4 flex-wrap justify-start">
+                        <!-- Renk Butonları Buraya JS ile Eklenecek -->
+                    </div>
+                </div>
+                
+                <!-- 2. Şekil Kütüphanesi -->
+                <div class="space-y-3">
+                    <button id="toggle-shapes" class="w-full bg-brand-indigo hover:bg-brand-purple text-white font-bold py-3 px-4 rounded-xl transition duration-150 flex justify-between items-center shadow-lg transform hover:scale-[1.01]">
+                        <span class="text-lg">2. Şekil Ekle / Kütüphane</span>
+                        <svg id="shapes-arrow" class="w-5 h-5 transform transition-transform duration-300 rotate-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+                    
+                    <!-- Şekil Kütüphanesi İçeriği -->
+                    <div id="shape-library" class="hidden p-4 bg-deep-card rounded-xl shadow-xl border border-brand-indigo/50">
+                        <button id="add-straight-line" class="w-full bg-primary-neon/80 hover:bg-primary-neon text-gray-900 font-bold py-2 px-4 rounded-lg mb-3 transition duration-150 shadow-lg">
+                            Düz Neon Çubuk Ekle (40cm)
+                        </button>
+                        <div class="grid grid-cols-3 gap-3">
+                             <!-- Görsel Şekil Butonları -->
+                             <button id="add-zigzag-m-line" class="shape-button flex flex-col items-center justify-center p-3 bg-gray-600 hover:bg-yellow-700/80 rounded-lg transition duration-150 text-yellow-300 shadow-md">
+                                <svg class="w-8 h-8" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="currentColor" stroke-width="8" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M 10 90 L 35 10 L 60 90 L 85 10 L 90 90" />
+                                </svg>
+                                <span class="text-xs mt-1">M Şekli</span>
+                            </button>
+                            <button id="add-zigzag-n-line" class="shape-button flex flex-col items-center justify-center p-3 bg-gray-600 hover:bg-cyan-700/80 rounded-lg transition duration-150 text-cyan-300 shadow-md">
+                                <svg class="w-8 h-8" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="currentColor" stroke-width="8" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M 10 90 L 10 10 L 90 90 L 90 10" />
+                                </svg>
+                                <span class="text-xs mt-1">N Harfi</span>
+                            </button>
+                            <button id="add-v-shape-line" class="shape-button flex flex-col items-center justify-center p-3 bg-gray-600 hover:bg-lime-700/80 rounded-lg transition duration-150 text-lime-300 shadow-md">
+                                <svg class="w-8 h-8" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="currentColor" stroke-width="8" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M 10 10 L 50 90 L 90 10" />
+                                </svg>
+                                <span class="text-xs mt-1">V Harfi</span>
+                            </button>
+                            <button id="add-single-peak-line" class="shape-button flex flex-col items-center justify-center p-3 bg-gray-600 hover:bg-pink-700/80 rounded-lg transition duration-150 text-pink-300 shadow-md">
+                                <svg class="w-8 h-8" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="currentColor" stroke-width="8" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M 10 90 L 50 10 L 90 90" />
+                                </svg>
+                                <span class="text-xs mt-1">A Harfi</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. Seçili Neon Bilgisi -->
+                <div id="selected-element-info" class="bg-deep-card p-4 rounded-xl shadow-2xl border border-teal-500/50 hidden">
+                    <p class="font-bold text-xl text-teal-300 mb-3 border-b border-gray-600 pb-2">3. Öğeyi Konumlandır</p>
                     
                     <!-- X Konum Kontrolü (En) -->
-                    <div class="mb-2">
-                        <label class="block text-sm font-medium mb-1">X Konumunu Ayarla (En)</label>
-                        <input type="range" id="control-pos-x" min="-0.4" max="0.4" step="0.01" class="w-full h-2 rounded-lg appearance-none cursor-pointer bg-gray-600">
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium mb-2">X Konumunu Ayarla (En)</label>
+                        <input type="range" id="control-pos-x" min="-0.4" max="0.4" step="0.01" class="w-full">
                     </div>
                     
                     <!-- Z Konum Kontrolü (Boy) -->
-                    <div class="mb-2">
-                        <label class="block text-sm font-medium mb-1">Z Konumunu Ayarla (Boy)</label>
-                        <input type="range" id="control-pos-z" min="-0.2" max="0.2" step="0.01" class="w-full h-2 rounded-lg appearance-none cursor-pointer bg-gray-600">
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium mb-2">Z Konumunu Ayarla (Boy)</label>
+                        <input type="range" id="control-pos-z" min="-0.2" max="0.2" step="0.01" class="w-full">
                     </div>
 
                     <!-- Y Rotasyon Kontrolü -->
-                    <div class="mb-2">
-                        <label class="block text-sm font-medium mb-1">Y Rotasyonu (Düzlemde)</label>
-                        <input type="range" id="control-rot-y" min="0" max="360" step="5" class="w-full h-2 rounded-lg appearance-none cursor-pointer bg-gray-600">
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium mb-2">Y Rotasyonu (Düzlemde)</label>
+                        <input type="range" id="control-rot-y" min="0" max="360" step="5" class="w-full">
                     </div>
 
-                    <button id="remove-neon" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg mt-3 transition duration-150">
+                    <button id="remove-neon" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg mt-3 transition duration-150 shadow-md">
                         Seçili Neonu Sil
                     </button>
                 </div>
 
-                <!-- Renk Seçimi -->
-                <div class="mb-6">
-                    <label class="block text-sm font-medium mb-2">Neon Rengi Seç</label>
-                    <div id="color-picker" class="flex gap-2 flex-wrap">
-                        <!-- Renk Butonları Buraya JS ile Eklenecek -->
-                    </div>
-                </div>
-
-                <!-- Neon Ekle -->
-                <button id="add-straight-line" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg mb-2 transition duration-150">
-                    Düz Neon Çubuk Ekle
-                </button>
-                 <button id="add-zigzag-m-line" class="w-full bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded-lg mb-2 transition duration-150">
-                    M Harfi Ekle
-                </button>
-                <!-- Yeni Harfler -->
-                <button id="add-zigzag-n-line" class="w-full bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-2 px-4 rounded-lg mb-2 transition duration-150">
-                    N Harfi Ekle
-                </button>
-                <button id="add-v-shape-line" class="w-full bg-lime-600 hover:bg-lime-700 text-white font-bold py-2 px-4 rounded-lg mb-2 transition duration-150">
-                    V Harfi Ekle
-                </button>
-                <button id="add-single-peak-line" class="w-full bg-pink-600 hover:bg-pink-700 text-white font-bold py-2 px-4 rounded-lg mb-4 transition duration-150">
-                    A Harfi Ekle
-                </button>
                 
-                <!-- Efekt Aç/Kapa -->
-                <div class="border-t pt-4 border-gray-600">
-                    <button id="toggle-effect" class="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg mb-4 transition duration-150">
-                        Efektleri Kapat (Neon Kapalı)
-                    </button>
-                </div>
-
-                <!-- Kaydet/Yükle -->
-                <div class="border-t pt-4 border-gray-600">
-                    <button id="save-design" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg mb-2 transition duration-150">
-                    Tasarımı Kaydet
-                    </button>
-                    <button id="load-design" class="w-full bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-bold py-2 px-4 rounded-lg transition duration-150">
-                        Kaydedileni Yükle
-                    </button>
-                </div>
-                
-                <!-- YENİ: Boyut ve Fiyatlandırma Seçimi -->
-                <div class="border-t pt-4 mt-4 border-gray-600">
-                    <h2 class="text-xl font-semibold mb-4 pb-2 text-teal-300">Boyut & Fiyatlandırma</h2>
+                <!-- 4. Ebat ve Fiyatlandırma (Satış Odaklı) -->
+                <div class="bg-deep-card p-4 rounded-xl shadow-2xl border-2 border-yellow-500/50 mt-auto">
+                    <h2 class="text-xl font-bold mb-3 border-b pb-2 border-gray-600 text-yellow-300">4. Ebat & Fiyatlandırma</h2>
                     
                     <!-- Fiyat Gösterimi -->
-                    <div class="bg-gray-700 p-3 rounded-lg mb-4 text-center">
-                        <p class="text-sm text-gray-400">Seçilen Ebat Fiyatı:</p>
-                        <p id="current-price" class="text-3xl font-bold text-yellow-300">20.000 TL</p>
-                        <p class="text-xs mt-1 text-gray-400">Uzaktan Kumanda Tüm Ürünlere Dahildir!</p>
+                    <div class="bg-gray-800 p-3 rounded-lg mb-4 text-center border border-gray-700">
+                        <p class="text-md font-medium text-gray-400">Seçilen Ebat Fiyatı (KDV Dahil):</p>
+                        <p id="current-price" class="text-4xl font-extrabold text-yellow-300 my-1">20.000 TL</p>
+                        <p class="text-xs mt-1 text-primary-neon font-semibold">Uzaktan Kumanda Tüm Ürünlere DAHİLDİR!</p>
                     </div>
 
                     <label class="block text-sm font-medium mb-2">Masa Ebatı Seçin (En x Boy x Yükseklik)</label>
-                    <div id="size-selector" class="space-y-2">
+                    <div id="size-selector" class="space-y-3">
                         <!-- Boyut Seçenekleri Buraya JS ile Eklenecek -->
                     </div>
                     
-                    <!-- Kullanıcıya Neon/Yazı Sınırları Bilgisi -->
-                    <div id="design-limits-info" class="text-xs text-gray-400 p-2 mt-3 border border-gray-600 rounded">
+                    <!-- Neon/Yazı Sınırları Bilgisi -->
+                    <div id="design-limits-info" class="text-xs text-gray-400 p-3 mt-4 rounded bg-gray-800/50 border border-gray-700">
                         <p><strong>Neon Sınırları:</strong> Seçime göre yüklenecektir.</p>
                         <p><strong>Yazı Seçeneği:</strong> 3D tasarıma yazı ekleme özelliği eklenecektir.</p>
                     </div>
 
                 </div>
                 
-                <!-- Cam Aç/Kapa Butonu -->
-                <div class="border-t pt-4 mt-4 border-gray-600">
-                    <button id="toggle-glass" class="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-4 rounded-lg transition duration-150">
-                        Camı Kaldır
+                <!-- 5. Diğer İşlemler (Kaydetme / Cam / Efekt) -->
+                <div class="bg-deep-card p-4 rounded-xl shadow-2xl space-y-3">
+                    <h2 class="text-xl font-bold mb-3 border-b pb-2 border-gray-600 text-white">5. Araçlar ve Kayıt</h2>
+                    
+                    <button id="toggle-effect" class="w-full bg-brand-indigo hover:bg-brand-purple text-white font-bold py-2 px-4 rounded-lg transition duration-150 shadow-md">
+                        Efektleri Kapat (Neon Kapalı)
                     </button>
+                    
+                    <button id="toggle-glass" class="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-4 rounded-lg transition duration-150 shadow-md">
+                        Camı Kaldır (Tasarım Erişim)
+                    </button>
+                    
+                    <div class="flex space-x-2 pt-2">
+                        <button id="save-design" class="w-1/2 bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg transition duration-150 shadow-md">
+                        Kaydet
+                        </button>
+                        <button id="load-design" class="w-1/2 bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-bold py-2 px-4 rounded-lg transition duration-150 shadow-md">
+                            Yükle
+                        </button>
+                    </div>
                 </div>
 
-                <!-- YENİ: WhatsApp Sipariş Butonu -->
-                <div class="border-t pt-4 mt-4 border-gray-600">
-                    <button id="order-whatsapp" class="w-full bg-green-700 hover:bg-green-800 text-white font-bold py-3 px-4 rounded-lg mt-3 text-lg transition duration-150 flex items-center justify-center">
+
+                <!-- YENİ: WhatsApp Sipariş Butonu (En Altta Sabit ve Göz Alıcı) -->
+                <div class="sticky bottom-0 border-t pt-4 border-gray-600">
+                    <button id="order-whatsapp" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 px-4 rounded-xl text-xl transition duration-150 shadow-2xl flex items-center justify-center transform hover:scale-[1.02]">
                         <svg class="w-6 h-6 mr-2" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                             <path d="M12.039 2c-5.584 0-10.126 4.542-10.126 10.126 0 1.748.44 3.421 1.284 4.887l-1.34 4.904 5.025-1.315c1.42 76.54 3.09 1.284 4.837 1.284h.01c5.584 0 10.126-4.542 10.126-10.126s-4.542-10.126-10.126-10.126zm0 18.42c-2.88 0-5.55-.916-7.85-2.52l-.56-.334-3.13.82.83-3.045-.357-.577c-1.64-2.483-2.5-5.32-2.5-8.26 0-4.634 3.766-8.4 8.4-8.4s8.4 3.766 8.4 8.4-3.766 8.4-8.4 8.4zm4.456-6.19c-.244-.122-.962-.477-1.11-.532-.148-.054-.256-.08-.363.08-.107.155-.417.532-.51.64-.093.107-.186.12-.34.037-.154-.08-2.618-1.615-4.997-3.084-.397-.243-.666-.41-2.843-1.745-.246-.145-.353-.2-.407-.225-.053-.027-.42-.032-.816-.032-.397 0-.962.122-1.306.61-.345.488-1.307 1.272-1.307 3.107 0 1.835 1.522 3.593 1.522 3.84 0 .002.396.488.908 1.05.512.56.962.748 1.805.975.842.227 1.73.197 2.37.133.64-.06 1.87-.76 2.14-1.503.268-.743.268-1.373.185-1.503-.082-.13-.148-.155-.303-.236z"/>
                         </svg>
-                        Tasarımı Bitir ve WhatsApp'tan Sipariş Ver
+                        SİPARİŞİ TAMAMLA (WhatsApp)
                     </button>
                 </div>
             </div>
 
-            <!-- 3D Sahne Konteyneri -->
-            <div id="scene-container" class="flex-grow bg-gray-900 relative">
+            <!-- 3D Sahne Konteyneri (Değişmeyen Alan) -->
+            <div id="scene-container" class="flex-grow bg-dark-bg relative">
                 <div id="loading-overlay" class="absolute inset-0 bg-gray-900/90 flex items-center justify-center z-10 text-white text-xl">
                     3D Sahne Yükleniyor...
                 </div>
@@ -218,13 +302,13 @@
             </div>
         </main>
         
-        <!-- Alt Çubuk (Ek Bilgiler/İpuçları) -->
+        <!-- Alt Çubuk (Profesyonel İpucu) -->
         <footer class="bg-gray-800 p-2 text-center text-xs text-gray-400">
-            İpucu: Masayı döndürmek ve yakınlaştırmak için farenizi kullanın. Neon çubuğa tıklayarak onu seçin ve konumunu ayarlayın.
+            İpucu: Masayı döndürmek ve yakınlaştırmak için farenizi kullanın. Seçmek için neon çubuğa tek tıklayın.
         </footer>
     </div>
 
-    <!-- Modalları (Pencere) simüle etmek için -->
+    <!-- Modallar (UX için zorunlu) -->
     <div id="modal-container" class="hidden fixed inset-0 bg-black bg-opacity-70 z-50 flex items-center justify-center">
         <div class="bg-white p-6 rounded-lg shadow-2xl max-w-sm w-full text-gray-900">
             <h3 id="modal-title" class="text-xl font-bold mb-4">Başlık</h3>
@@ -244,11 +328,11 @@
         let neonElementsData = [];
         let selectedNeonObject = null;
         let currentSelectedColor = '#00FFFF'; // Varsayılan: Mavi
-        let glassContainer = null; // Cam bileşenlerini tutacak grup
-        let smokedGlassMirrorMaterial = null; // Cam materyali (Efekt kontrolü için global yapıldı)
-        let isEffectOn = true; // Efekt durumu
+        let glassContainer = null; 
+        let smokedGlassMirrorMaterial = null; 
+        let isEffectOn = true; 
         const NEON_EMISSIVE_POWER_ON = 1.0;
-        const NEON_EMISSIVE_POWER_OFF = 0.01; // Tamamen sıfırlamıyoruz, görünür kalması için çok az ışık bırakıyoruz
+        const NEON_EMISSIVE_POWER_OFF = 0.01; 
 
         const neonColors = [
             { name: "Mavi", hex: "#00FFFF" },
@@ -259,18 +343,18 @@
             { name: "Beyaz", hex: "#FFFFFF" }
         ];
 
-        // YENİ: Masa Boyutları, Fiyatları ve Sınırları
+        // Masa Boyutları, Fiyatları ve Sınırları
         const tableSizes = [
             {
-                name: "70x45x50 CM",
+                name: "70x45x50 CM (15.000 TL)",
                 width: 0.70,
                 depth: 0.45,
                 height: 0.50,
                 price: 15000,
-                limits: { m: 1, a: 2, v: 2, n: 2, text_cm: '60cm x 30cm' } // 70cm'lik masaya göre varsayımsal metin
+                limits: { m: 1, a: 2, v: 2, n: 2, text_cm: '60cm x 30cm' } 
             },
             {
-                name: "90x45x50 CM",
+                name: "90x45x50 CM (20.000 TL)",
                 width: 0.90,
                 depth: 0.45,
                 height: 0.50,
@@ -278,7 +362,7 @@
                 limits: { m: 1, a: 2, v: 2, n: 2, text_cm: '80cm x 30cm' }
             },
             {
-                name: "120x80x50 CM",
+                name: "120x80x50 CM (35.000 TL)",
                 width: 1.20,
                 depth: 0.80,
                 height: 0.50,
@@ -286,7 +370,7 @@
                 limits: { m: 2, a: 4, v: 4, n: 4, text_cm: '110cm x 30cm' }
             },
             {
-                name: "150x80x50 CM",
+                name: "150x80x50 CM (45.000 TL)",
                 width: 1.50,
                 depth: 0.80,
                 height: 0.50,
@@ -296,20 +380,20 @@
         ];
 
         // Sabitler (Mevcut seçime göre dinamik olacak)
-        let currentSizeIndex = 1; // Varsayılan: 90x45x50 CM
-        let TABLE_WIDTH = tableSizes[currentSizeIndex].width; // En (X ekseni)
-        let TABLE_DEPTH = tableSizes[currentSizeIndex].depth; // Boy (Z ekseni)
-        let TABLE_FRAME_HEIGHT = tableSizes[currentSizeIndex].height; // Toplam Yükseklik (Y ekseni)
+        let currentSizeIndex = 1; 
+        let TABLE_WIDTH = tableSizes[currentSizeIndex].width; 
+        let TABLE_DEPTH = tableSizes[currentSizeIndex].depth; 
+        let TABLE_FRAME_HEIGHT = tableSizes[currentSizeIndex].height; 
         
         // Three.js geometrik sabitleri
-        const BASE_THICKNESS = 0.05; // Alt kaide kalınlığı (5 cm)
-        let WORKING_PLANE_HEIGHT = TABLE_FRAME_HEIGHT - BASE_THICKNESS; // Cam bölme yüksekliği (Dinamik)
-        const BASE_Y = 0; // Alt taban Y koordinatı
-        const WORKING_PLANE_Y = BASE_Y + BASE_THICKNESS + 0.01; // Neonların üzerine yerleşeceği düzlem
-        const MAX_NEON_HEIGHT = 0.40; // Maksimum neon çubuk yüksekliği (40 cm)
+        const BASE_THICKNESS = 0.05; 
+        let WORKING_PLANE_HEIGHT = TABLE_FRAME_HEIGHT - BASE_THICKNESS; 
+        const BASE_Y = 0; 
+        const WORKING_PLANE_Y = BASE_Y + BASE_THICKNESS + 0.01; 
+        const MAX_NEON_HEIGHT = 0.40; 
 
-        const NEON_RADIUS = 0.008; // Kalınlığı 0.8cm
-        const glassThickness = 0.02; // Yan duvar ve üst cam kalınlığı (2 cm)
+        const NEON_RADIUS = 0.008; 
+        const glassThickness = 0.02; 
 
 
         // --- Firebase ve Auth İşlemleri ---
@@ -317,7 +401,7 @@
         const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
         const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
-        /** Modalı gösterir (alert() yerine kullanılır) */
+        /** Modalı gösterir */
         function showModal(title, message) {
             document.getElementById('modal-title').textContent = title;
             document.getElementById('modal-message').textContent = message;
@@ -329,7 +413,6 @@
             if (Object.keys(firebaseConfig).length === 0) {
                 console.error("Firebase config is missing. Using anonymous setup.");
                 document.getElementById('user-id-display').textContent = 'Anonim (Kaydetme Devre Dışı)';
-                // 3D sahneyi yine de başlat
                 initThreeJS(); 
                 return;
             }
@@ -338,24 +421,20 @@
                 const app = initializeApp(firebaseConfig);
                 db = getFirestore(app);
                 auth = getAuth(app);
-                setLogLevel('Debug'); // Firestore loglarını aç
+                setLogLevel('Debug'); 
 
-                // Özel token ile veya anonim olarak oturum açma
                 if (initialAuthToken) {
                     await signInWithCustomToken(auth, initialAuthToken);
                 } else {
                     await signInAnonymously(auth);
                 }
 
-                // Auth durumu değiştiğinde kullanıcı ID'sini al
                 onAuthStateChanged(auth, (user) => {
                     if (user) {
                         userId = user.uid;
                         document.getElementById('user-id-display').textContent = userId;
-                        // Auth hazır olduğunda 3D sahneyi başlat
                         initThreeJS(); 
                     } else {
-                        // Anonim giriş başarısız olursa
                         userId = crypto.randomUUID();
                         document.getElementById('user-id-display').textContent = `Anonim ID: ${userId.substring(0, 8)}...`;
                         initThreeJS();
@@ -365,7 +444,6 @@
             } catch (error) {
                 console.error("Firebase başlatma hatası:", error);
                 showModal("Hata", "Firebase başlatılamadı. Tasarım kaydetme çalışmayabilir.");
-                // Hata durumunda bile sahneyi başlat
                 initThreeJS(); 
             }
         }
@@ -373,35 +451,29 @@
         // --- Three.js Sahne ve Nesne Oluşturma ---
 
         function initThreeJS() {
-            // THREE.js değişkenlerini güncel boyutlara göre yeniden ayarla
+            // Boyutları güncelle
             const currentSize = tableSizes[currentSizeIndex];
             TABLE_WIDTH = currentSize.width;
             TABLE_DEPTH = currentSize.depth;
             TABLE_FRAME_HEIGHT = currentSize.height;
             WORKING_PLANE_HEIGHT = TABLE_FRAME_HEIGHT - BASE_THICKNESS;
             
-            // Sahneyi gizle/göster
             document.getElementById('loading-overlay').classList.add('hidden');
             const container = document.getElementById('scene-container');
             
-            // Mevcut sahneyi temizle (boyut değişimi için)
             if (scene) {
-                 // Sadece bir kere init'in çağrılması ihtimaline karşı eski canvas'ı kaldır
                 const oldCanvas = renderer?.domElement;
                 if (oldCanvas) {
                     container.removeChild(oldCanvas);
                 }
             }
 
-            // Sahne
             scene = new THREE.Scene();
-            scene.background = new THREE.Color(0x111111); // Koyu arka plan
+            scene.background = new THREE.Color(0x111111); 
 
-            // Kamera
             camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
-            camera.position.set(TABLE_WIDTH * 2, TABLE_FRAME_HEIGHT * 2, TABLE_DEPTH * 2); // Yeni boyutlara göre kamerayı ayarlama
+            camera.position.set(TABLE_WIDTH * 2, TABLE_FRAME_HEIGHT * 2, TABLE_DEPTH * 2); 
 
-            // Renderer
             renderer = new THREE.WebGLRenderer({ antialias: true });
             renderer.setSize(container.clientWidth, container.clientHeight);
             renderer.setPixelRatio(window.devicePixelRatio);
@@ -410,37 +482,28 @@
             renderer.toneMappingExposure = 1.0;
             container.appendChild(renderer.domElement);
 
-            // Kontroller
             controls = new THREE.OrbitControls(camera, renderer.domElement);
             controls.minDistance = 1;
             controls.maxDistance = 5;
-            // Kamerayı masanın merkezine odakla (Yüksekliği merkezleme)
             controls.target.set(0, TABLE_FRAME_HEIGHT / 2, 0); 
             controls.update();
 
-            // Işıklandırma
-            scene.add(new THREE.AmbientLight(0x404040, 5)); // Genel aydınlatma
+            scene.add(new THREE.AmbientLight(0x404040, 5)); 
             
-            // Tabloyu Oluştur
             createTable();
             
-            // UI'yı Hazırla (İlk yüklemede bir kez)
             if (!document.getElementById('size-selector').children.length) {
                 setupUI();
             }
 
-            // Tasarımı Yükle (Varsa)
             loadUserDesign(userId);
             
-            // Animasyon Döngüsünü Başlat
             animate();
 
-            // Pencere Yeniden Boyutlandırma İşleyicisi
-            window.removeEventListener('resize', onWindowResize); // Eski event'i kaldır
+            window.removeEventListener('resize', onWindowResize); 
             window.addEventListener('resize', onWindowResize, false);
 
-            // Tıklama ile Neon Seçimi İşleyicisi
-            renderer.domElement.removeEventListener('click', onCanvasClick); // Eski event'i kaldır
+            renderer.domElement.removeEventListener('click', onCanvasClick); 
             renderer.domElement.addEventListener('click', onCanvasClick, false);
         }
 
@@ -457,16 +520,13 @@
             renderer.render(scene, camera);
         }
 
-        // --- Tablo Modeli ---
-
         function createTable() {
             const tableGroup = new THREE.Group();
             tableGroup.name = "Neon_Table_Group";
 
-            // 1. Alt Ahşap/Metal Taban (BASE) - Opak kaide
             const baseGeometry = new THREE.BoxGeometry(TABLE_WIDTH + 0.05, BASE_THICKNESS, TABLE_DEPTH + 0.05);
             const baseMaterial = new THREE.MeshStandardMaterial({
-                color: 0x000000, // Siyah ahşap/metal görünümü
+                color: 0x000000, 
                 metalness: 0.1,
                 roughness: 0.8, 
             });
@@ -474,145 +534,113 @@
             baseMesh.position.y = BASE_Y + BASE_THICKNESS / 2;
             tableGroup.add(baseMesh);
 
-            // 2. İç Ayna Zemini (Neonların Yansıdığı Zemin)
             const innerBaseGeometry = new THREE.BoxGeometry(TABLE_WIDTH, 0.005, TABLE_DEPTH);
             const innerBaseMaterial = new THREE.MeshStandardMaterial({
                 color: 0x000000,
                 metalness: 0.95,
-                roughness: 0.0, // Yüksek yansıtma (Ayna)
+                roughness: 0.0, 
             });
             const innerBaseMesh = new THREE.Mesh(innerBaseGeometry, innerBaseMaterial);
-            innerBaseMesh.position.y = WORKING_PLANE_Y; // Neonların hemen altında
+            innerBaseMesh.position.y = WORKING_PLANE_Y; 
             innerBaseMesh.userData.isWorkingPlane = true;
             tableGroup.add(innerBaseMesh);
 
-            // 3. Füme Aynalı Cam Materyali (Yan Camlar ve Üst Kapak için) 
-            // Köşedeki gri parçalanmayı azaltmak için opaklık ve metaliklik ayarlandı.
             smokedGlassMirrorMaterial = new THREE.MeshPhysicalMaterial({
-                color: 0x222222, // Koyu füme rengi
-                metalness: 0.8, // Daha yüksek metaliklik -> daha iyi yansıma, daha az yarı saydamlık hissi
+                color: 0x222222, 
+                metalness: 0.8, 
                 roughness: 0.1, 
-                opacity: 0.1, // Daha düşük opaklık -> köşelerde üst üste binme hissini azaltır
+                opacity: 0.1, 
                 transparent: true,
                 transmission: 0.0, 
-                reflectivity: 0.95, // Yüksek yansıtma
+                reflectivity: 0.95, 
                 clearcoat: 1.0,
                 clearcoatRoughness: 0.1,
                 side: THREE.DoubleSide 
             });
 
-            // 4. Cam Konteyneri (Tüm cam bileşenleri)
             glassContainer = new THREE.Group();
             glassContainer.name = 'GlassContainer';
             const wallHeight = WORKING_PLANE_HEIGHT;
             const center_Y = BASE_THICKNESS + wallHeight / 2;
             
-            // Orijinal kapalı pozisyonu kaydet (Masanın üstü)
             glassContainer.userData.closedPosition = new THREE.Vector3(0, BASE_THICKNESS, 0); 
-            // Açık pozisyonu kaydet (Masanın hemen yanı) - Dinamik boyutlandırma
             glassContainer.userData.openPosition = new THREE.Vector3(TABLE_WIDTH * 1.5, BASE_THICKNESS, 0);
 
 
-            // Yan Cam Duvarlar (Dikey cam bölme)
-            
-            // Uzun Kenar 1 (En) 
             const side1 = new THREE.Mesh(new THREE.BoxGeometry(TABLE_WIDTH, wallHeight, glassThickness), smokedGlassMirrorMaterial);
             side1.position.set(0, center_Y - BASE_THICKNESS, TABLE_DEPTH / 2 + glassThickness / 2);
             glassContainer.add(side1);
             
-            // Uzun Kenar 2 (En)
             const side2 = new THREE.Mesh(new THREE.BoxGeometry(TABLE_WIDTH, wallHeight, glassThickness), smokedGlassMirrorMaterial);
             side2.position.set(0, center_Y - BASE_THICKNESS, -TABLE_DEPTH / 2 - glassThickness / 2);
             glassContainer.add(side2);
 
-            // Kısa Kenar 1 (Boy) - Köşelerde boşluk kalmaması için boyu 2*glassThickness kadar uzattık.
             const side3 = new THREE.Mesh(new THREE.BoxGeometry(glassThickness, wallHeight, TABLE_DEPTH + 2 * glassThickness), smokedGlassMirrorMaterial);
             side3.position.set(TABLE_WIDTH / 2 + glassThickness / 2, center_Y - BASE_THICKNESS, 0);
             glassContainer.add(side3);
 
-            // Kısa Kenar 2 (Boy)
             const side4 = new THREE.Mesh(new THREE.BoxGeometry(glassThickness, wallHeight, TABLE_DEPTH + 2 * glassThickness), smokedGlassMirrorMaterial);
             side4.position.set(-TABLE_WIDTH / 2 - glassThickness / 2, center_Y - BASE_THICKNESS, 0);
             glassContainer.add(side4);
 
 
-            // 5. Üst Cam Kapak (Aynı Füme Aynalı Materyal)
-            // Yan camların dış kenarlarını kaplayacak şekilde boyutlandırıldı.
             const glassMesh = new THREE.Mesh(new THREE.BoxGeometry(TABLE_WIDTH + 2 * glassThickness, glassThickness, TABLE_DEPTH + 2 * glassThickness), smokedGlassMirrorMaterial);
             
-            // Cam kapağı yan duvarların üzerine, en üste yerleştir (Konteynerin içindeki pozisyon)
             const capY = WORKING_PLANE_HEIGHT + glassThickness / 2;
             glassMesh.position.y = capY - BASE_THICKNESS; 
             glassMesh.userData.isGlass = true;
             glassMesh.userData.name = 'Glass_Cover';
             glassContainer.add(glassMesh);
             
-            // Cam konteynerini başlangıçta kapalı pozisyonda ayarla
             glassContainer.position.copy(glassContainer.userData.closedPosition); 
             tableGroup.add(glassContainer);
 
             scene.add(tableGroup);
 
-            // Sahneye eklenecek olan Neonların ana konteyneri
             const neonContainer = new THREE.Group();
             neonContainer.name = 'NeonContainer';
-            // Neonları iç tabanın hemen üstüne konumlandır
             neonContainer.position.y = WORKING_PLANE_Y; 
             scene.add(neonContainer);
         }
         
-        // --- Efekt Kontrol Fonksiyonu ---
         function toggleEffect() {
             isEffectOn = !isEffectOn;
             const neonContainer = scene.getObjectByName('NeonContainer');
             const toggleButton = document.getElementById('toggle-effect');
 
             const newEmissivePower = isEffectOn ? NEON_EMISSIVE_POWER_ON : NEON_EMISSIVE_POWER_OFF;
-            const newReflectivity = isEffectOn ? 0.95 : 0.01; // Efekt kapalıyken yansıtmayı azalt
+            const newReflectivity = isEffectOn ? 0.95 : 0.01; 
             
-            // 1. Neon parlaklığını ayarla
             if (neonContainer) {
                 neonContainer.children.forEach(mesh => {
                     if (mesh.userData.isNeon && mesh.material) {
                         mesh.material.emissiveIntensity = newEmissivePower;
-                        mesh.material.needsUpdate = true; // Materyali güncelle
+                        mesh.material.needsUpdate = true; 
                     }
                 });
             }
             
-            // 2. Cam yansıtıcılığını ayarla
             if (smokedGlassMirrorMaterial) {
-                // Sadece yansıtıcılığı değiştiriyoruz, temel rengi koruyoruz.
                 smokedGlassMirrorMaterial.reflectivity = newReflectivity;
                 smokedGlassMirrorMaterial.needsUpdate = true;
             }
 
-            // 3. Buton metnini güncelle
             if (isEffectOn) {
                 toggleButton.textContent = "Efektleri Kapat (Neon Kapalı)";
                 toggleButton.classList.remove('bg-gray-500', 'hover:bg-gray-600');
-                toggleButton.classList.add('bg-indigo-500', 'hover:bg-indigo-600');
+                toggleButton.classList.add('bg-brand-indigo', 'hover:bg-brand-purple');
             } else {
                 toggleButton.textContent = "Efektleri Aç (Neon Açık)";
-                toggleButton.classList.remove('bg-indigo-500', 'hover:bg-indigo-600');
+                toggleButton.classList.remove('bg-brand-indigo', 'hover:bg-brand-purple');
                 toggleButton.classList.add('bg-gray-500', 'hover:bg-gray-600');
             }
         }
 
 
-        /**
-         * Neon çubuk nesnesini oluşturur ve konteynere ekler.
-         * Kendi şeklinizi eklemek için bu fonksiyonu kullanın.
-         * @param {string} color Neon rengi (hex kodu).
-         * @param {string} type 'straight', 'zigzag_m', 'zigzag_n', 'v_shape', 'single_peak'.
-         * @returns {THREE.Mesh} Oluşturulan neon nesnesi.
-         */
         function createNeonObject(color, type) {
             const hexColor = new THREE.Color(color);
-            // Mevcut efekt durumuna göre parlaklık ayarlanır
             const emissivePower = isEffectOn ? NEON_EMISSIVE_POWER_ON : NEON_EMISSIVE_POWER_OFF;
             
-            // Emissive (parlama) malzemesi oluşturuluyor
             const emissiveMaterial = new THREE.MeshBasicMaterial({
                 color: hexColor,
                 emissive: hexColor,
@@ -624,31 +652,18 @@
             let length;
 
             if (type === 'straight') {
-                length = MAX_NEON_HEIGHT; // Maksimum 40cm dikey
+                length = MAX_NEON_HEIGHT; 
                 geometry = new THREE.CylinderGeometry(NEON_RADIUS, NEON_RADIUS, length, 16);
             } 
-            // --- HARF ŞEKİLLERİ ---
             else if (type === 'zigzag_m') {
-                // Şeklin yüksekliği (Y ekseninde)
                 length = MAX_NEON_HEIGHT * 0.9; 
-                // Şeklin genişliğini (X ekseninde) ayarlamak için bir oran
-                const width = TABLE_WIDTH * 0.35; // Masanın eni ile orantılı
+                const width = TABLE_WIDTH * 0.35; 
                 
-                // 1. Şeklin 3D noktalarını tanımlayın
                 const points = [
-                    // Sol Alt Başlangıç (Taban)
                     new THREE.Vector3(-width / 2, -length / 2, 0), 
-                    
-                    // İlk Zirve (Sol Üst)
                     new THREE.Vector3(-width / 4, length / 2, 0),             
-                    
-                    // Vadi (Orta Alt)
                     new THREE.Vector3(0, -length / 2 + 0.05, 0), 
-
-                    // İkinci Zirve (Sağ Üst)
                     new THREE.Vector3(width / 4, length / 2, 0),
-
-                    // Sağ Alt Bitiş (Taban)
                     new THREE.Vector3(width / 2, -length / 2, 0) 
                 ];
 
@@ -657,21 +672,13 @@
                 geometry = new THREE.TubeGeometry(customCurve, 64, NEON_RADIUS, 8, false); 
             }
             else if (type === 'zigzag_n') {
-                // N harfi
                 length = MAX_NEON_HEIGHT * 0.9; 
                 const width = TABLE_WIDTH * 0.35;
 
                 const points = [
-                    // Sol Alt Başlangıç (Taban)
                     new THREE.Vector3(-width / 2, -length / 2, 0), 
-                    
-                    // Zirve (Sol Üst)
                     new THREE.Vector3(-width / 2, length / 2, 0),             
-                    
-                    // Vadi (Orta Alt - Çaprazın alt noktası)
                     new THREE.Vector3(width / 2, -length / 2 + 0.05, 0), 
-
-                    // Sağ Üst Bitiş 
                     new THREE.Vector3(width / 2, length / 2, 0)
                 ];
 
@@ -680,19 +687,13 @@
                 geometry = new THREE.TubeGeometry(customCurve, 64, NEON_RADIUS, 8, false); 
             }
             else if (type === 'v_shape') {
-                // V harfi
                 length = MAX_NEON_HEIGHT * 0.7;
                 const width = TABLE_WIDTH * 0.3;
 
                 const points = [
-                    // Sol Üst Bitiş Noktası
                     new THREE.Vector3(-width / 2, length / 2, 0), 
-                    
-                    // Vadi (En Alt Köşe)
                     new THREE.Vector3(0, -length / 2 + 0.05, 0), 
-                    
-                    // Sağ Üst Bitiş Noktası
-                    new THREE.Vector3(width / 2, length / 2, 0) // V'nin kolları eşit yükseklikte yapıldı
+                    new THREE.Vector3(width / 2, length / 2, 0) 
                 ];
 
                 const customCurve = new THREE.CatmullRomCurve3(points);
@@ -700,18 +701,12 @@
                 geometry = new THREE.TubeGeometry(customCurve, 32, NEON_RADIUS, 8, false); 
             }
             else if (type === 'single_peak') {
-                 // A harfi (Tek Tepe)
                 length = MAX_NEON_HEIGHT * 0.9;
                 const width = TABLE_WIDTH * 0.3;
 
                 const points = [
-                    // Sol Alt Başlangıç (Taban)
                     new THREE.Vector3(-width / 2, -length / 2, 0), 
-                    
-                    // Zirve (En Üst Köşe)
                     new THREE.Vector3(0, length / 2, 0), 
-                    
-                    // Sağ Alt Bitiş Noktası (Taban)
                     new THREE.Vector3(width / 2, -length / 2, 0)
                 ];
 
@@ -720,11 +715,9 @@
                 geometry = new THREE.TubeGeometry(customCurve, 32, NEON_RADIUS, 8, false); 
             }
             else {
-                // Diğer eski şekiller kaldırıldı
                 return null;
             }
 
-            // Neon çubuk: asıl geometridir.
             const neonMesh = new THREE.Mesh(geometry, emissiveMaterial);
             neonMesh.userData.isNeon = true;
             neonMesh.userData.color = color;
@@ -732,35 +725,27 @@
             neonMesh.userData.length = length;
             neonMesh.userData.id = THREE.MathUtils.generateUUID();
             
-            // Sınır Kontrolü için yarım boyutları hesapla
             const halfWidth = TABLE_WIDTH / 2 - NEON_RADIUS;
             const halfDepth = TABLE_DEPTH / 2 - NEON_RADIUS;
 
-            // Başlangıç konumu ve rotasyonu (SINIR İÇİNDE)
             neonMesh.position.set(
                 THREE.MathUtils.clamp((Math.random() - 0.5) * TABLE_WIDTH * 0.5, -halfWidth, halfWidth),
-                length / 2, // Neon taban zemininin üzerine oturtuluyor
+                length / 2, 
                 THREE.MathUtils.clamp((Math.random() - 0.5) * TABLE_DEPTH * 0.5, -halfDepth, halfDepth)
             );
-            // Rotasyon sadece Y ekseninde (dikey çubuğu masanın üstünde döndürmek için)
             neonMesh.rotation.y = Math.random() * Math.PI * 2; 
 
-            // Veri yapısına ekle
             neonElementsData.push({
                 id: neonMesh.userData.id,
                 color: neonMesh.userData.color,
                 type: neonMesh.userData.type,
-                // Kaydederken konteynerin pozisyonunu dikkate almamak için sadece mesh'in yerel pozisyonunu kaydet
                 position: neonMesh.position.toArray(), 
                 rotation: neonMesh.rotation.toArray()
             });
 
-            // Sahneye ekle
             scene.getObjectByName('NeonContainer').add(neonMesh);
             return neonMesh;
         }
-
-        // --- Neon Seçimi ve Etkileşim ---
 
         let raycaster = new THREE.Raycaster();
         let mouse = new THREE.Vector2();
@@ -772,7 +757,6 @@
 
             raycaster.setFromCamera(mouse, camera);
             
-            // Sadece NeonContainer içindeki nesnelerle kesişimi kontrol et
             const neonContainer = scene.getObjectByName('NeonContainer');
             if (!neonContainer) return;
             
@@ -784,49 +768,36 @@
                     selectNeon(neonMesh);
                 }
             } else {
-                selectNeon(null); // Hiçbir şeye tıklanmadıysa seçimi kaldır
+                selectNeon(null); 
             }
         }
         
-        /**
-         * Bir neono tıklandığında seçimi yönetir ve kontrol panelini günceller.
-         * @param {THREE.Mesh|null} mesh Seçilen neon mesh'i veya null.
-         */
         function selectNeon(mesh) {
             if (selectedNeonObject) {
-                // Önceki seçimin görünümünü sıfırla (örneğin wireframe'i kaldır)
             }
 
             selectedNeonObject = mesh;
             const infoPanel = document.getElementById('selected-element-info');
             
             if (mesh) {
-                // Seçili neona odaklan
                 controls.target.copy(mesh.getWorldPosition(new THREE.Vector3()));
                 controls.update();
                 
                 infoPanel.classList.remove('hidden');
                 
-                // Kontrolleri mevcut pozisyona ayarla
                 const data = neonElementsData.find(d => d.id === mesh.userData.id);
                 if (data) {
-                    // X pozisyonu (En)
                     document.getElementById('control-pos-x').value = data.position[0];
-                    // Z pozisyonu (Boy)
                     document.getElementById('control-pos-z').value = data.position[2];
-                    // Y Rotasyonu (Düzlemde dönme)
                     const rotationYDeg = (data.rotation[1] * 180 / Math.PI) % 360;
                     document.getElementById('control-rot-y').value = rotationYDeg < 0 ? rotationYDeg + 360 : rotationYDeg;
                 }
             } else {
                 infoPanel.classList.add('hidden');
-                // Kamerayı merkeze geri taşı
                 controls.target.set(0, TABLE_FRAME_HEIGHT / 2, 0);
                 controls.update();
             }
         }
-
-        // --- UI ve Kontrol Yönetimi ---
 
         function setupUI() {
             // Renk Seçimi UI
@@ -839,11 +810,9 @@
                 button.dataset.color = c.hex;
                 button.addEventListener('click', () => {
                     currentSelectedColor = c.hex;
-                    // Seçili rengi görsel olarak vurgula
                     document.querySelectorAll('.neon-color-button').forEach(btn => btn.classList.remove('selected'));
                     button.classList.add('selected');
 
-                    // Seçili bir neon varsa rengini değiştir
                     if (selectedNeonObject) {
                         updateNeonColor(selectedNeonObject, c.hex);
                         saveDesignDebounced();
@@ -855,10 +824,19 @@
                 }
             });
             
-            // Efekt Aç/Kapa butonu işleyicisi
             document.getElementById('toggle-effect').addEventListener('click', toggleEffect);
 
-            // Neon Ekle Butonları
+            // Şekil Kütüphanesi Aç/Kapa
+            const toggleShapesButton = document.getElementById('toggle-shapes');
+            const shapeLibrary = document.getElementById('shape-library');
+            const shapesArrow = document.getElementById('shapes-arrow');
+
+            toggleShapesButton.addEventListener('click', () => {
+                const isHidden = shapeLibrary.classList.toggle('hidden');
+                shapesArrow.classList.toggle('rotate-180', !isHidden);
+            });
+            
+            // Şekil Kütüphanesi Ekleme Butonları
             document.getElementById('add-straight-line').addEventListener('click', () => {
                 const neon = createNeonObject(currentSelectedColor, 'straight');
                 selectNeon(neon);
@@ -869,7 +847,6 @@
                 selectNeon(neon);
                 saveDesignDebounced();
             });
-            // Yeni Harf Butonları
             document.getElementById('add-zigzag-n-line').addEventListener('click', () => {
                 const neon = createNeonObject(currentSelectedColor, 'zigzag_n');
                 selectNeon(neon);
@@ -887,8 +864,6 @@
             });
 
             // Seçili Neon Kontrolleri
-            
-            // X Konum Kontrolü (En)
             document.getElementById('control-pos-x').addEventListener('input', (e) => {
                 if (selectedNeonObject) {
                     selectedNeonObject.position.x = parseFloat(e.target.value);
@@ -897,7 +872,6 @@
                 }
             });
             
-            // Z Konum Kontrolü (Boy)
             document.getElementById('control-pos-z').addEventListener('input', (e) => {
                 if (selectedNeonObject) {
                     selectedNeonObject.position.z = parseFloat(e.target.value);
@@ -906,10 +880,8 @@
                 }
             });
             
-            // Y Rotasyon Kontrolü
             document.getElementById('control-rot-y').addEventListener('input', (e) => {
                 if (selectedNeonObject) {
-                    // Dereceyi radyana çevir
                     selectedNeonObject.rotation.y = parseFloat(e.target.value) * Math.PI / 180;
                     updateNeonData(selectedNeonObject);
                     saveDesignDebounced();
@@ -927,12 +899,11 @@
                 document.getElementById('modal-container').classList.add('hidden');
             });
             
-            // YENİ: Boyut Seçimi UI
+            // Boyut Seçimi UI
             const sizeSelector = document.getElementById('size-selector');
             const currentPriceDisplay = document.getElementById('current-price');
             const limitsInfo = document.getElementById('design-limits-info');
             
-            // Fiyat ve Sınırları güncelleyen yardımcı fonksiyon
             function updateSizeDisplay() {
                 const currentSize = tableSizes[currentSizeIndex];
                 currentPriceDisplay.textContent = `${currentSize.price.toLocaleString('tr-TR')} TL`;
@@ -956,17 +927,13 @@
                 label.className = 'size-label';
                 label.textContent = size.name;
 
-                // Event listener'ı radio yerine label'a eklemek, peer selector ile doğru çalışmasını sağlar.
                 radio.addEventListener('change', () => {
                     if (currentSizeIndex === index) return;
                     
-                    // Boyut değişince 3D sahneyi yeniden oluştur
                     currentSizeIndex = index;
                     
-                    // Sahneyi temizle (eski neonlar kaldırılır)
                     const neonContainer = scene.getObjectByName('NeonContainer');
                     if (neonContainer) {
-                        // Çocukları temizle
                         neonContainer.children.slice().forEach(child => {
                             if (child.userData.isNeon) {
                                 child.geometry.dispose();
@@ -975,11 +942,10 @@
                             }
                         });
                     }
-                    neonElementsData = []; // Veri yapısını da sıfırla
+                    neonElementsData = []; 
                     
                     updateSizeDisplay();
                     
-                    // Three.js'i yeni boyutlarla yeniden başlat
                     initThreeJS(); 
                     showModal("Boyut Değişikliği", `${size.name} ebatına geçildi. Tasarımınız sıfırlandı. Lütfen yeni ebatta tekrar tasarlayın.`);
                 });
@@ -988,40 +954,33 @@
                 sizeSelector.appendChild(label);
             });
             
-            // Başlangıç fiyatını ve sınırları göster
             updateSizeDisplay();
 
             // Cam Aç/Kapa butonu
             document.getElementById('toggle-glass').addEventListener('click', () => {
-                // glassContainer henüz tanımlanmamış olabilir (initThreeJS çalışmadıysa)
                 if (!glassContainer) return; 
 
                 const closedPos = glassContainer.userData.closedPosition;
-                // Açık pozisyonu mevcut TABLE_WIDTH'e göre dinamik hesapla
                 const openPos = new THREE.Vector3(TABLE_WIDTH * 1.5, BASE_THICKNESS, 0);
                 
-                // Konumları karşılaştırmak için tolerans kullan
                 const isClosed = glassContainer.position.distanceTo(closedPos) < 0.01;
 
                 if (isClosed) { 
-                    // Kapalı konumdaysa yana taşı
                     glassContainer.position.copy(openPos); 
                     document.getElementById('toggle-glass').textContent = "Camı Kapat";
                 } else { 
-                    // Açık konumdaysa masanın üzerine geri getir
                     glassContainer.position.copy(closedPos); 
-                    document.getElementById('toggle-glass').textContent = "Camı Kaldır";
+                    document.getElementById('toggle-glass').textContent = "Camı Kaldır (Tasarım Erişim)";
                 }
             });
 
 
-            // YENİ: WhatsApp Sipariş Butonu
+            // WhatsApp Sipariş Butonu
             document.getElementById('order-whatsapp').addEventListener('click', () => {
                 const currentSize = tableSizes[currentSizeIndex];
                 const selectedSize = currentSize.name;
                 const totalPrice = currentSize.price;
                 
-                // JSON'u daha okunabilir hale getiriyoruz
                 const designDetails = JSON.stringify(neonElementsData.map(d => ({
                     type: d.type,
                     color: d.color,
@@ -1030,7 +989,6 @@
                     rotation_y: (d.rotation[1] * 180 / Math.PI).toFixed(0) + ' derece'
                 })), null, 2);
                 
-                // WhatsApp mesaj içeriği
                 const message = `Merhaba, Neon Masa Tasarımım ile ilgili sipariş vermek istiyorum.
 
 * **Seçilen Ebat:** ${selectedSize}
@@ -1041,57 +999,39 @@ ${designDetails}
 
 Lütfen en kısa zamanda benimle iletişime geçin. (Tasarım ID: ${userId})`;
 
-                // WhatsApp telefon numarası (örnek)
-                const phoneNumber = '905551234567'; // LÜTFEN KENDİ NUMARANIZLA DEĞİŞTİRİN
+                const phoneNumber = '905551234567'; 
                 
                 const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
                 window.open(whatsappUrl, '_blank');
             });
         }
         
-        /**
-         * Three.js nesnesini günceller ve veri yapısındaki karşılığını bulur.
-         * Ayrıca, neonun masa sınırları içinde kalmasını sağlar.
-         * @param {THREE.Mesh} mesh Güncellenecek neon mesh'i.
-         */
         function updateNeonData(mesh) {
             if (!mesh.userData.isNeon) return;
 
-            // Sınır Kontrolü (Neon çubukların masadan dışarı çıkmasını engelle)
-            // Neon çubuğun yerleşeceği alandan yarıçap kadar boşluk bırakıyoruz.
             const halfWidth = TABLE_WIDTH / 2 - NEON_RADIUS;
             const halfDepth = TABLE_DEPTH / 2 - NEON_RADIUS;
             
-            // X ve Z pozisyonlarını sınırlar içinde tutar
             mesh.position.x = THREE.MathUtils.clamp(mesh.position.x, -halfWidth, halfWidth);
             mesh.position.z = THREE.MathUtils.clamp(mesh.position.z, -halfDepth, halfDepth);
             
              const data = neonElementsData.find(d => d.id === mesh.userData.id);
              if (data) {
-                // Yerel pozisyonu kaydet (NeonContainer içindeki)
                 data.position = mesh.position.toArray();
                 data.rotation = mesh.rotation.toArray();
              }
         }
 
-        /**
-         * Neon'un rengini hem 3D nesnede hem de veri yapısında günceller.
-         * @param {THREE.Mesh} mesh Güncellenecek neon mesh'i.
-         * @param {string} color Yeni renk (hex kodu).
-         */
         function updateNeonColor(mesh, color) {
-            // Hata tespiti: mesh ve mesh.material'in varlığını kontrol et
             if (!mesh || !mesh.material) {
                 console.error("updateNeonColor: Mesh veya materyal tanımsız. Renk güncellenemedi.");
                 return;
             }
             
             const hexColor = new THREE.Color(color);
-            // Renk ve emissive değerlerini güvenle ayarla
             mesh.material.color.set(hexColor);
             mesh.material.emissive.set(hexColor);
             
-            // Mevcut efekt durumunu koruyarak parlaklık ayarını uygula
             mesh.material.emissiveIntensity = isEffectOn ? NEON_EMISSIVE_POWER_ON : NEON_EMISSIVE_POWER_OFF;
             mesh.userData.color = color;
 
@@ -1101,27 +1041,16 @@ Lütfen en kısa zamanda benimle iletişime geçin. (Tasarım ID: ${userId})`;
              }
         }
 
-        /**
-         * Neon nesnesini sahneden ve veri yapısından kaldırır.
-         * @param {THREE.Mesh} mesh Kaldırılacak neon mesh'i.
-         */
         function removeNeonObject(mesh) {
             const neonContainer = scene.getObjectByName('NeonContainer');
             if (neonContainer) {
                 neonContainer.remove(mesh);
             }
-            // Veri yapısından kaldır
             neonElementsData = neonElementsData.filter(d => d.id !== mesh.userData.id);
             mesh.geometry.dispose();
             mesh.material.dispose();
         }
 
-        // --- Firebase Kaydetme/Yükleme İşlemleri ---
-
-        /** * Firestore doküman referansını oluşturur.
-         * Yol: /artifacts/{appId}/users/{userId}/designs/neon_table_design
-         * Bu yol, özel kullanıcı verilerini depolamak için gereklidir (çift sayıda segment).
-         */
         const designDocRef = () => {
             return doc(
                 db,
@@ -1129,15 +1058,14 @@ Lütfen en kısa zamanda benimle iletişime geçin. (Tasarım ID: ${userId})`;
                 appId,
                 'users',
                 userId,
-                'designs', // Yeni koleksiyon: designs
-                'neon_table_design' // Doküman ID'si
+                'designs', 
+                'neon_table_design' 
             );
         };
 
-        const DEBOUNCE_DELAY = 1000; // 1 saniye bekleme
+        const DEBOUNCE_DELAY = 1000; 
         let saveTimeout = null;
 
-        /** Kaydetme işlemini geciktirerek ardışık işlemleri gruplar */
         function saveDesignDebounced() {
             clearTimeout(saveTimeout);
             saveTimeout = setTimeout(() => {
@@ -1145,19 +1073,17 @@ Lütfen en kısa zamanda benimle iletişime geçin. (Tasarım ID: ${userId})`;
             }, DEBOUNCE_DELAY);
         }
 
-        /** Tasarımı Firebase'e kaydeder */
         async function saveUserDesign() {
             if (!db || !userId || userId === 'anon_user') {
                 console.warn("Kullanıcı kimliği veya Firebase hazır değil. Kaydetme işlemi iptal edildi.");
                 return;
             }
             
-            // Sadece JSON serileştirilebilen verileri kaydet
             const savePayload = {
-                version: 2, // Versiyonu 2'ye çıkardık
+                version: 2, 
                 lastUpdated: Date.now(),
-                selectedSizeIndex: currentSizeIndex, // Seçilen boyutu da kaydet
-                neonElements: JSON.stringify(neonElementsData) // Diziyi string olarak kaydet
+                selectedSizeIndex: currentSizeIndex, 
+                neonElements: JSON.stringify(neonElementsData) 
             };
 
             try {
@@ -1169,7 +1095,6 @@ Lütfen en kısa zamanda benimle iletişime geçin. (Tasarım ID: ${userId})`;
             }
         }
 
-        /** Kaydedilmiş tasarımı yükler */
         async function loadUserDesign() {
             if (!db || !userId) {
                  console.warn("Kullanıcı kimliği veya Firebase hazır değil. Yükleme iptal edildi.");
@@ -1186,23 +1111,18 @@ Lütfen en kısa zamanda benimle iletişime geçin. (Tasarım ID: ${userId})`;
                 if (docSnap.exists()) {
                     const data = docSnap.data();
                     
-                    // Önce boyutu yükle
                     const loadedSizeIndex = data.selectedSizeIndex !== undefined ? data.selectedSizeIndex : 1;
                     
-                    // Eğer yüklenen boyut mevcut boyuttan farklıysa, boyut seçimi UI'sını güncelle
                     if (loadedSizeIndex !== currentSizeIndex) {
                         currentSizeIndex = loadedSizeIndex;
-                        // Boyut seçiciyi görsel olarak güncelle
                         document.getElementById(`size-${currentSizeIndex}`).checked = true;
                         
-                        // THREE.js değişkenlerini güncelle ve sahneyi yenile
                         const currentSize = tableSizes[currentSizeIndex];
                         TABLE_WIDTH = currentSize.width;
                         TABLE_DEPTH = currentSize.depth;
                         TABLE_FRAME_HEIGHT = currentSize.height;
                         WORKING_PLANE_HEIGHT = TABLE_FRAME_HEIGHT - BASE_THICKNESS;
                         
-                        // Sahneyi temizle ve boyutları güncelle
                         const neonContainer = scene.getObjectByName('NeonContainer');
                         if (neonContainer) {
                             neonContainer.children.slice().forEach(child => {
@@ -1212,15 +1132,12 @@ Lütfen en kısa zamanda benimle iletişime geçin. (Tasarım ID: ${userId})`;
                             });
                         }
                         
-                        // Kamerayı yeni boyuta göre ayarla
                         camera.position.set(TABLE_WIDTH * 2, TABLE_FRAME_HEIGHT * 2, TABLE_DEPTH * 2);
                         controls.target.set(0, TABLE_FRAME_HEIGHT / 2, 0); 
                         controls.update();
 
-                        // Tabloyu yeniden oluştur
                         createTable(); 
                         
-                        // Fiyat ve sınırları UI'da güncelle
                         document.getElementById('current-price').textContent = `${currentSize.price.toLocaleString('tr-TR')} TL`;
                         document.getElementById('design-limits-info').innerHTML = `
                             <p><strong>Neon Sınırları (Harf/Şekil):</strong> M: ${currentSize.limits.m}, A: ${currentSize.limits.a}, V: ${currentSize.limits.v}, N: ${currentSize.limits.n} (Toplam sınır)</p>
@@ -1233,7 +1150,6 @@ Lütfen en kısa zamanda benimle iletişime geçin. (Tasarım ID: ${userId})`;
                     if (data.neonElements) {
                         const loadedData = JSON.parse(data.neonElements);
                         
-                        // Sahneyi temizle (boyut değişiminde zaten temizlendi, ama emin olmak için)
                         const neonContainer = scene.getObjectByName('NeonContainer');
                         if (neonContainer) {
                             neonContainer.children.forEach(child => {
@@ -1246,13 +1162,10 @@ Lütfen en kısa zamanda benimle iletişime geçin. (Tasarım ID: ${userId})`;
                         }
                         neonElementsData = [];
 
-                        // Yeni nesneleri oluştur
                         loadedData.forEach(data => {
                             const mesh = createNeonObject(data.color, data.type);
-                            // Yüklenen pozisyon ve rotasyonu doğrudan mesh'e uygula (NeonContainer içindeki yerel değerler)
                             mesh.position.fromArray(data.position);
                             mesh.rotation.fromArray(data.rotation);
-                            // Yüklendikten sonra sınır kontrolünü çalıştır
                             updateNeonData(mesh); 
                         });
 
@@ -1266,14 +1179,5 @@ Lütfen en kısa zamanda benimle iletişime geçin. (Tasarım ID: ${userId})`;
                 console.error("Tasarım yükleme hatası:", error);
                 showModal("Yükleme Hatası", "Tasarım yüklenirken bir sorun oluştu.");
             } finally {
-                loadButton.textContent = 'Kaydedileni Yükle';
+                loadButton.textContent = 'Yükle';
                 loadButton.disabled = false;
-            }
-        }
-
-        // --- Başlatma ---
-        
-        window.onload = initializeFirebase;
-    </script>
-</body>
-</html>
