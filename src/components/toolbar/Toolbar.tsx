@@ -1,5 +1,5 @@
 import {
-  Move3D as Move3d,   // Eski sürümdeki adı, yenide yok
+  Move,
   Redo2,
   RefreshCcw,
   Save,
@@ -10,7 +10,7 @@ import {
   Upload,
   PenSquare,
   Sparkles,
-  Box3d // Cube yerine bu kullanılacak
+  Box
 } from 'lucide-react';
 import { ChangeEvent } from 'react';
 import { useDesignStore } from '../../state/designStore';
@@ -107,6 +107,7 @@ export const Toolbar = () => {
           <input type="file" accept=".svg" onChange={handleSvgUpload} className="sr-only" />
         </label>
       </div>
+
       <div className="h-8 w-px bg-slate-700/70" aria-hidden />
       <div className="flex items-center gap-2">
         {(['translate', 'rotate', 'scale'] as const).map((mode) => (
@@ -119,13 +120,14 @@ export const Toolbar = () => {
                 : 'border border-slate-700/80 text-slate-200 hover:border-neon-blue/80 hover:text-white'
             }`}
           >
-            {mode === 'translate' && <Move3D className="h-4 w-4" />}
+            {mode === 'translate' && <Move className="h-4 w-4" />}
             {mode === 'rotate' && <RefreshCcw className="h-4 w-4" />}
             {mode === 'scale' && <SquareMousePointer className="h-4 w-4" />}
             {mode.charAt(0).toUpperCase() + mode.slice(1)}
           </button>
         ))}
       </div>
+
       <div className="h-8 w-px bg-slate-700/70" aria-hidden />
       <div className="flex items-center gap-2">
         <button
@@ -145,6 +147,7 @@ export const Toolbar = () => {
           Redo
         </button>
       </div>
+
       <div className="h-8 w-px bg-slate-700/70" aria-hidden />
       <div className="flex items-center gap-2">
         <button
@@ -166,7 +169,7 @@ export const Toolbar = () => {
             onClick={handleExportGlb}
             className="flex items-center gap-2 rounded-2xl border border-neon-pink/60 px-4 py-2 font-semibold uppercase tracking-wide text-slate-200 transition hover:border-neon-blue/80 hover:text-white"
           >
-            <Box3d className="h-4 w-4" />
+            <Box className="h-4 w-4" />
             GLB
           </button>
         </div>
