@@ -209,25 +209,13 @@ export const NeonShapeMesh = ({ shape, transformMode, orbitControlsRef }: NeonSh
           mode={transformMode}
           camera={camera}
           enabled
-          onMouseDown={() => {
+          onPointerDown={() => {
             setTransforming(true);
             if (orbitControlsRef.current) {
               orbitControlsRef.current.enabled = false;
             }
           }}
-          onMouseUp={() => {
-            setTransforming(false);
-            if (orbitControlsRef.current) {
-              orbitControlsRef.current.enabled = true;
-            }
-          }}
-          onTouchStart={() => {
-            setTransforming(true);
-            if (orbitControlsRef.current) {
-              orbitControlsRef.current.enabled = false;
-            }
-          }}
-          onTouchEnd={() => {
+          onPointerUp={() => {
             setTransforming(false);
             if (orbitControlsRef.current) {
               orbitControlsRef.current.enabled = true;
