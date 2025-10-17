@@ -8,7 +8,9 @@ import { DesignProvider } from './providers/DesignProvider';
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <React.StrictMode>
-    <BrowserRouter>
+    <BrowserRouter
+      future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
+    >
       <FirebaseProvider>
         <DesignProvider>
           <App />

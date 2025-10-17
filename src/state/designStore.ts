@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
+import { isDraft, original } from 'immer';
 import { nanoid } from '../utils/nanoid';
 import type { Vector3Tuple } from 'three';
 import { DesignStateData, GlassSettings, NeonShape, ShapeKind } from '../types/design';
@@ -59,10 +60,17 @@ const defaultDesign = (): DesignStateData => ({
 });
 
 const clone = <T,>(value: T): T => {
+  const plain = isDraft(value) ? (original(value) as T) ?? value : value;
+
   if (typeof structuredClone === 'function') {
-    return structuredClone(value);
+    try {
+      return structuredClone(plain);
+    } catch (error) {
+      // Ignore and fall through to JSON cloning when structuredClone cannot serialize.
+    }
   }
-  return JSON.parse(JSON.stringify(value));
+
+  return JSON.parse(JSON.stringify(plain));
 };
 
 const pushHistory = (state: DesignStoreState['history'], next: DesignStateData) => {
