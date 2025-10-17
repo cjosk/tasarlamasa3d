@@ -10,7 +10,7 @@ import {
   Upload,
   PenSquare,
   Sparkles,
-  Cube
+  Box
 } from 'lucide-react';
 import { ChangeEvent } from 'react';
 import { useDesignStore } from '../../state/designStore';
@@ -166,7 +166,7 @@ export const Toolbar = () => {
             onClick={handleExportGlb}
             className="flex items-center gap-2 rounded-2xl border border-neon-pink/60 px-4 py-2 font-semibold uppercase tracking-wide text-slate-200 transition hover:border-neon-blue/80 hover:text-white"
           >
-            <Cube className="h-4 w-4" />
+            <Box className="h-4 w-4" />
             GLB
           </button>
         </div>
