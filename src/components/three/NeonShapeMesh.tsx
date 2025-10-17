@@ -75,7 +75,7 @@ const createCurveForKind = (kind: NeonShape['kind']) => {
 
 export const NeonShapeMesh = ({ shape, transformMode }: NeonShapeMeshProps) => {
   const group = useRef<Group>(null);
-  const [target, setTarget] = useState<Group | null>(null);
+  const [attachedObject, setAttachedObject] = useState<Group | null>(null);
   const selectShape = useDesignStore((state) => state.selectShape);
   const updateShape = useDesignStore((state) => state.updateShape);
   const selectedId = useDesignStore((state) => state.history.present.selectedId);
@@ -163,29 +163,35 @@ export const NeonShapeMesh = ({ shape, transformMode }: NeonShapeMeshProps) => {
   };
 
   return (
-    <group
-      ref={(instance) => {
-        if (instance) {
+    <>
+      <group
+        ref={(instance) => {
+          if (!instance) {
+            group.current = null;
+            setAttachedObject((prev) => (prev ? null : prev));
+            return;
+          }
           group.current = instance;
-          setTarget(instance);
-        }
-      }}
-      onPointerDown={(event) => {
-        event.stopPropagation();
-        selectShape(shape.id);
-      }}
-      onPointerMissed={(event) => {
-        if (event.type === 'pointerdown') {
-          selectShape(undefined);
-        }
-      }}
-    >
-      {renderGeometry()}
-      {isSelected && target && (
+          setAttachedObject((prev) => (prev === instance ? prev : instance));
+        }}
+        onPointerDown={(event) => {
+          event.stopPropagation();
+          selectShape(shape.id);
+        }}
+        onPointerMissed={(event) => {
+          if (event.type === 'pointerdown') {
+            selectShape(undefined);
+          }
+        }}
+      >
+        {renderGeometry()}
+      </group>
+      {isSelected && attachedObject && (
         <TransformControls
-          object={target}
+          object={attachedObject}
           mode={transformMode}
           camera={camera}
+          enabled
           onObjectChange={() => {
             if (!group.current) return;
             updateShape(shape.id, {
@@ -196,7 +202,7 @@ export const NeonShapeMesh = ({ shape, transformMode }: NeonShapeMeshProps) => {
           }}
         />
       )}
-    </group>
+    </>
   );
 };
 
