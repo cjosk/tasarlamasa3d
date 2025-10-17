@@ -19,6 +19,7 @@ export const ThreeCanvas = () => {
   const design = useDesignStore(selectCurrentDesign);
   const performance = useDesignStore((state) => state.performance);
   const transformMode = useDesignStore((state) => state.transformMode);
+  const isTransforming = useDesignStore((state) => state.isTransforming);
   const tableHeights = useDesignStore(selectTableHeights);
   const tableProfile = useDesignStore(selectTableProfile);
   const shapes = design.shapes;
@@ -89,6 +90,7 @@ export const ThreeCanvas = () => {
           <Environment preset="city" />
           <OrbitControls
             ref={orbitControlsRef}
+            enabled={!isTransforming}
             enablePan={false}
             minPolarAngle={Math.PI / 4}
             maxPolarAngle={(2 * Math.PI) / 3}

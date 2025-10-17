@@ -80,20 +80,25 @@ export const NeonShapeMesh = ({ shape, transformMode, orbitControlsRef }: NeonSh
   const [attachedObject, setAttachedObject] = useState<Group | null>(null);
   const selectShape = useDesignStore((state) => state.selectShape);
   const updateShape = useDesignStore((state) => state.updateShape);
+  const setTransforming = useDesignStore((state) => state.setTransforming);
   const selectedId = useDesignStore((state) => state.history.present.selectedId);
   const { camera } = useThree();
   const isSelected = selectedId === shape.id;
 
   useEffect(() => {
-    if (!isSelected && orbitControlsRef.current) {
-      orbitControlsRef.current.enabled = true;
+    if (!isSelected) {
+      setTransforming(false);
+      if (orbitControlsRef.current) {
+        orbitControlsRef.current.enabled = true;
+      }
     }
     return () => {
+      setTransforming(false);
       if (orbitControlsRef.current) {
         orbitControlsRef.current.enabled = true;
       }
     };
-  }, [isSelected, orbitControlsRef]);
+  }, [isSelected, orbitControlsRef, setTransforming]);
 
   useEffect(() => {
     if (!group.current) return;
@@ -204,17 +209,32 @@ export const NeonShapeMesh = ({ shape, transformMode, orbitControlsRef }: NeonSh
           mode={transformMode}
           camera={camera}
           enabled
-          onPointerDown={() => {
+          onMouseDown={() => {
+            setTransforming(true);
             if (orbitControlsRef.current) {
               orbitControlsRef.current.enabled = false;
             }
           }}
-          onPointerUp={() => {
+          onMouseUp={() => {
+            setTransforming(false);
+            if (orbitControlsRef.current) {
+              orbitControlsRef.current.enabled = true;
+            }
+          }}
+          onTouchStart={() => {
+            setTransforming(true);
+            if (orbitControlsRef.current) {
+              orbitControlsRef.current.enabled = false;
+            }
+          }}
+          onTouchEnd={() => {
+            setTransforming(false);
             if (orbitControlsRef.current) {
               orbitControlsRef.current.enabled = true;
             }
           }}
           onPointerMissed={() => {
+            setTransforming(false);
             if (orbitControlsRef.current) {
               orbitControlsRef.current.enabled = true;
             }

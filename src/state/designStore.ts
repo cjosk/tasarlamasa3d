@@ -20,6 +20,7 @@ interface DesignStoreState {
   onboardingStep: number;
   performance: 'high' | 'eco';
   transformMode: 'translate' | 'rotate' | 'scale';
+  isTransforming: boolean;
   loading: boolean;
   error?: string;
   setTableSize: (sizeId: TableSizeId) => void;
@@ -32,6 +33,7 @@ interface DesignStoreState {
   setTitle: (title: string) => void;
   setPerformance: (mode: 'high' | 'eco') => void;
   setTransformMode: (mode: 'translate' | 'rotate' | 'scale') => void;
+  setTransforming: (active: boolean) => void;
   setAnimationEnabled: (enabled: boolean) => void;
   loadDesign: (data: DesignStateData) => void;
   resetDesign: () => void;
@@ -115,6 +117,7 @@ export const useDesignStore = create<DesignStoreState>()(
     onboardingStep: 0,
     performance: 'high',
     transformMode: 'translate',
+    isTransforming: false,
     loading: false,
     error: undefined,
     setTableSize: (sizeId) =>
@@ -219,6 +222,8 @@ export const useDesignStore = create<DesignStoreState>()(
       }),
     setTransformMode: (mode) =>
       set(() => ({ transformMode: mode })),
+    setTransforming: (active) =>
+      set(() => ({ isTransforming: active })),
     setAnimationEnabled: (enabled) =>
       set((state) => {
         const next: DesignStateData = {
