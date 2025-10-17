@@ -1,6 +1,6 @@
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Environment, ContactShadows, Html } from '@react-three/drei';
-import { Suspense, useMemo } from 'react';
+import { Suspense, useMemo, useRef } from 'react';
 import { EffectComposer, Bloom } from '@react-three/postprocessing';
 import { NeonShapeMesh } from './NeonShapeMesh';
 import {
@@ -12,6 +12,7 @@ import {
 import { GlassSurface } from './layers/GlassSurface';
 import { TableSurface } from './layers/TableSurface';
 import { useDesignContext } from '../../providers/DesignProvider';
+import { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
 
 export const ThreeCanvas = () => {
   const { canvasRef } = useDesignContext();
@@ -21,6 +22,7 @@ export const ThreeCanvas = () => {
   const tableHeights = useDesignStore(selectTableHeights);
   const tableProfile = useDesignStore(selectTableProfile);
   const shapes = design.shapes;
+  const orbitControlsRef = useRef<OrbitControlsImpl | null>(null);
 
   const bloomConfig = useMemo(
     () => ({
@@ -69,7 +71,12 @@ export const ThreeCanvas = () => {
             <TableSurface />
             {design.glass.enabled && <GlassSurface glass={design.glass} />}
             {shapes.map((shape) => (
-              <NeonShapeMesh key={shape.id} shape={shape} transformMode={transformMode} />
+              <NeonShapeMesh
+                key={shape.id}
+                shape={shape}
+                transformMode={transformMode}
+                orbitControlsRef={orbitControlsRef}
+              />
             ))}
           </group>
           <ContactShadows
@@ -81,6 +88,7 @@ export const ThreeCanvas = () => {
           />
           <Environment preset="city" />
           <OrbitControls
+            ref={orbitControlsRef}
             enablePan={false}
             minPolarAngle={Math.PI / 4}
             maxPolarAngle={(2 * Math.PI) / 3}

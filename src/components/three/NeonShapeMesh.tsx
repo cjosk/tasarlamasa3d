@@ -1,14 +1,16 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { MutableRefObject, useEffect, useMemo, useRef, useState } from 'react';
 import { CatmullRomCurve3, Group, MeshStandardMaterial, Vector3, Vector3Tuple } from 'three';
 import { TransformControls, Text } from '@react-three/drei';
 import { NeonShape } from '../../types/design';
 import { useDesignStore } from '../../state/designStore';
 import { useFrame, useThree } from '@react-three/fiber';
 import { SVGLoader } from 'three/examples/jsm/loaders/SVGLoader.js';
+import { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
 
 interface NeonShapeMeshProps {
   shape: NeonShape;
   transformMode: 'translate' | 'rotate' | 'scale';
+  orbitControlsRef: MutableRefObject<OrbitControlsImpl | null>;
 }
 
 const getColor = (color: string, intensity: number) => {
@@ -73,7 +75,7 @@ const createCurveForKind = (kind: NeonShape['kind']) => {
   }
 };
 
-export const NeonShapeMesh = ({ shape, transformMode }: NeonShapeMeshProps) => {
+export const NeonShapeMesh = ({ shape, transformMode, orbitControlsRef }: NeonShapeMeshProps) => {
   const group = useRef<Group | null>(null);
   const [attachedObject, setAttachedObject] = useState<Group | null>(null);
   const selectShape = useDesignStore((state) => state.selectShape);
@@ -81,6 +83,17 @@ export const NeonShapeMesh = ({ shape, transformMode }: NeonShapeMeshProps) => {
   const selectedId = useDesignStore((state) => state.history.present.selectedId);
   const { camera } = useThree();
   const isSelected = selectedId === shape.id;
+
+  useEffect(() => {
+    if (!isSelected && orbitControlsRef.current) {
+      orbitControlsRef.current.enabled = true;
+    }
+    return () => {
+      if (orbitControlsRef.current) {
+        orbitControlsRef.current.enabled = true;
+      }
+    };
+  }, [isSelected, orbitControlsRef]);
 
   useEffect(() => {
     if (!group.current) return;
@@ -191,6 +204,21 @@ export const NeonShapeMesh = ({ shape, transformMode }: NeonShapeMeshProps) => {
           mode={transformMode}
           camera={camera}
           enabled
+          onPointerDown={() => {
+            if (orbitControlsRef.current) {
+              orbitControlsRef.current.enabled = false;
+            }
+          }}
+          onPointerUp={() => {
+            if (orbitControlsRef.current) {
+              orbitControlsRef.current.enabled = true;
+            }
+          }}
+          onPointerMissed={() => {
+            if (orbitControlsRef.current) {
+              orbitControlsRef.current.enabled = true;
+            }
+          }}
           onObjectChange={() => {
             if (!group.current) return;
             updateShape(shape.id, {
