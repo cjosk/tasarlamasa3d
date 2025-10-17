@@ -74,7 +74,7 @@ const createCurveForKind = (kind: NeonShape['kind']) => {
 };
 
 export const NeonShapeMesh = ({ shape, transformMode }: NeonShapeMeshProps) => {
-  const group = useRef<Group>(null);
+  const group = useRef<Group | null>(null);
   const [attachedObject, setAttachedObject] = useState<Group | null>(null);
   const selectShape = useDesignStore((state) => state.selectShape);
   const updateShape = useDesignStore((state) => state.updateShape);
@@ -150,7 +150,6 @@ export const NeonShapeMesh = ({ shape, transformMode }: NeonShapeMeshProps) => {
             outlineWidth={0.03}
             outlineColor={shape.color}
             outlineOpacity={0.4 + shape.glowRadius * 0.1}
-            toneMapped={false}
           >
             {shape.text}
           </Text>
@@ -168,7 +167,7 @@ export const NeonShapeMesh = ({ shape, transformMode }: NeonShapeMeshProps) => {
         ref={(instance) => {
           if (!instance) {
             group.current = null;
-            setAttachedObject((prev) => (prev ? null : prev));
+            setAttachedObject(null);
             return;
           }
           group.current = instance;
@@ -212,7 +211,7 @@ interface SvgShapeProps {
 }
 
 const SvgShape = ({ path, material }: SvgShapeProps) => {
-  const group = useRef<Group>(null);
+  const group = useRef<Group | null>(null);
 
   const shapes = useMemo(() => {
     if (!path) return [];
