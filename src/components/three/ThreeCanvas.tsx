@@ -32,8 +32,9 @@ export const ThreeCanvas = () => {
   );
 
   return (
-    <div ref={canvasRef} className="relative h-full w-full">
+    <div ref={canvasRef} className="relative h-full w-full pointer-events-none">
       <Canvas
+        className="pointer-events-auto"
         shadows
         camera={{ position: [4.6, 4.2, 5], fov: 42, near: 0.1, far: 60 }}
         gl={{ alpha: true, antialias: true, preserveDrawingBuffer: true }}

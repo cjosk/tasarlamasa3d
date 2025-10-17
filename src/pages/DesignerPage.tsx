@@ -37,7 +37,7 @@ export const DesignerPage = () => {
 
   return (
     <div className="relative flex h-[calc(100vh-5rem)] flex-col">
-      <div className="px-4 pt-4">
+      <div className="relative z-30 px-4 pt-4">
         <Toolbar />
       </div>
       {loading && (
@@ -51,7 +51,7 @@ export const DesignerPage = () => {
           <ShapePanel />
         </div>
         <div className="relative flex min-h-[400px] flex-col overflow-hidden rounded-3xl border border-slate-800/80 bg-slate-900/70 shadow-panel">
-          <div className="absolute inset-x-0 top-0 z-10 flex justify-between px-4 py-3 text-xs text-slate-400">
+          <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex justify-between px-4 py-3 text-xs text-slate-400">
             <span>{design.title}</span>
             <span>{authUser?.displayName ?? 'Designer'}</span>
           </div>
