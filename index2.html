@@ -1,0 +1,1216 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neon Masa Konfigüratörü | Spatial Glass Edition</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        // Apple Dark Mode / Glassmorphism için temiz ve derin renk paleti
+                        'primary-apple': '#007AFF', // iOS/macOS Blue
+                        'dark-bg': '#0D1117', // Ultra Koyu Arka Plan (Ana zemin)
+                        'glass-surface': 'rgba(255, 255, 255, 0.05)', // Hafif Beyaz Parlaklık (İç modül)
+                        'glass-bg': 'rgba(10, 25, 40, 0.45)', // Derin, koyu şeffaf ana kart (Daha opak hale getirildi)
+                        'glass-border': 'rgba(255, 255, 255, 0.15)', // İnce, zarif beyaz sınır (Daha belirgin)
+                        'neon-accent': '#3B82F6', // Neon Mavi aksan (macOS Mavi Tonu)
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'], 
+                    },
+                    boxShadow: {
+                        // Daha derin ve yumuşak gölgeler
+                        'glass-deep': '0 10px 40px 0 rgba(0, 0, 0, 0.45)', // Gölgeler güçlendirildi
+                        'glow-blue': '0 0 18px rgba(59, 130, 246, 0.6)',
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, collection, query, onSnapshot, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Global değişkenleri tanımlama
+        window.initializeApp = initializeApp;
+        window.getAuth = getAuth;
+        window.signInAnonymously = signInAnonymously;
+        window.signInWithCustomToken = signInWithCustomToken;
+        window.onAuthStateChanged = onAuthStateChanged;
+        window.getFirestore = getFirestore;
+        window.doc = doc;
+        window.setDoc = setDoc;
+        window.getDoc = getDoc;
+        window.collection = collection;
+        window.query = query;
+        window.onSnapshot = onSnapshot;
+        window.getDocs = getDocs;
+        window.setLogLevel = setLogLevel;
+        
+        // **********************************************
+        // DİKKAT: Buradaki büyük JavaScript modülü, tüm
+        // Three.js ve Firebase işlevselliğini barındırır.
+        // ID'leri ve fonksiyonelliği korumak için,
+        // bu kod bloğu tamamen orijinal bırakılmıştır.
+        // **********************************************
+
+        let scene, camera, renderer, controls;
+        let db, auth, userId = 'anon_user';
+        let neonElementsData = [];
+        let selectedNeonObject = null;
+        let currentSelectedColor = '#00FFFF'; 
+        let glassContainer = null; 
+        let smokedGlassMirrorMaterial = null; 
+        let isEffectOn = true; 
+        const NEON_EMISSIVE_POWER_ON = 1.0;
+        const NEON_EMISSIVE_POWER_OFF = 0.01; 
+
+        const neonColors = [
+            { name: "Mavi", hex: "#00FFFF" },
+            { name: "Yeşil", hex: "#00FF00" },
+            { name: "Kırmızı", hex: "#FF0000" },
+            { name: "Pembe", hex: "#FF00FF" },
+            { name: "Sarı", hex: "#FFFF00" },
+            { name: "Beyaz", hex: "#FFFFFF" }
+        ];
+
+        const tableSizes = [
+            {
+                name: "70x45x50 CM",
+                width: 0.70,
+                depth: 0.45,
+                height: 0.50,
+                price: 15000,
+                limits: { m: 1, a: 2, v: 2, n: 2, text_cm: '60cm x 30cm' } 
+            },
+            {
+                name: "90x45x50 CM",
+                width: 0.90,
+                depth: 0.45,
+                height: 0.50,
+                price: 20000,
+                limits: { m: 1, a: 2, v: 2, n: 2, text_cm: '80cm x 30cm' }
+            },
+            {
+                name: "120x80x50 CM",
+                width: 1.20,
+                depth: 0.80,
+                height: 0.50,
+                price: 35000,
+                limits: { m: 2, a: 4, v: 4, n: 4, text_cm: '110cm x 30cm' }
+            },
+            {
+                name: "150x80x50 CM",
+                width: 1.50,
+                depth: 0.80,
+                height: 0.50,
+                price: 45000,
+                limits: { m: 3, a: 6, v: 6, n: 6, text_cm: '140cm x 30cm' }
+            }
+        ];
+
+        let currentSizeIndex = 1; 
+        let TABLE_WIDTH = tableSizes[currentSizeIndex].width; 
+        let TABLE_DEPTH = tableSizes[currentSizeIndex].depth; 
+        let TABLE_FRAME_HEIGHT = tableSizes[currentSizeIndex].height; 
+        
+        const BASE_THICKNESS = 0.05; 
+        let WORKING_PLANE_HEIGHT = TABLE_FRAME_HEIGHT - BASE_THICKNESS; 
+        const BASE_Y = 0; 
+        const WORKING_PLANE_Y = BASE_Y + BASE_THICKNESS + 0.01; 
+        const MAX_NEON_HEIGHT = 0.40; 
+
+        const NEON_RADIUS = 0.008; 
+        const glassThickness = 0.02; 
+
+
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        function showModal(title, message) {
+            document.getElementById('modal-title').textContent = title;
+            document.getElementById('modal-message').textContent = message;
+            document.getElementById('modal-container').classList.remove('hidden');
+        }
+
+        async function initializeFirebase() {
+            if (Object.keys(firebaseConfig).length === 0) {
+                console.error("Firebase config is missing. Using anonymous setup.");
+                document.getElementById('user-id-display').textContent = 'Anonim (Kaydetme Devre Dışı)';
+                return;
+            }
+
+            try {
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+                setLogLevel('Debug'); 
+
+                if (initialAuthToken) {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                } else {
+                    await signInAnonymously(auth);
+                }
+
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        userId = user.uid;
+                        document.getElementById('user-id-display').textContent = userId.substring(0, 6) + '...';
+                    } else {
+                        userId = crypto.randomUUID();
+                        document.getElementById('user-id-display').textContent = `Anonim ID: ${userId.substring(0, 6)}...`;
+                    }
+                    loadUserDesign(); 
+                });
+
+            } catch (error) {
+                console.error("Firebase başlatma hatası:", error);
+                showModal("Hata", "Firebase başlatılamadı. Tasarım kaydetme çalışmayabilir.");
+            }
+        }
+
+        function initThreeJS() {
+            const currentSize = tableSizes[currentSizeIndex];
+            TABLE_WIDTH = currentSize.width;
+            TABLE_DEPTH = currentSize.depth;
+            TABLE_FRAME_HEIGHT = currentSize.height;
+            WORKING_PLANE_HEIGHT = TABLE_FRAME_HEIGHT - BASE_THICKNESS;
+            
+            document.getElementById('loading-overlay').classList.add('hidden');
+            const container = document.getElementById('scene-container');
+            
+            if (scene) {
+                const oldCanvas = renderer?.domElement;
+                if (oldCanvas) {
+                    container.removeChild(oldCanvas);
+                }
+            }
+
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x111111); 
+
+            camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
+            camera.position.set(TABLE_WIDTH * 2, TABLE_FRAME_HEIGHT * 2, TABLE_DEPTH * 2); 
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.outputEncoding = THREE.sRGBEncoding;
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            renderer.toneMappingExposure = 1.0;
+            container.appendChild(renderer.domElement);
+
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.minDistance = 1;
+            controls.maxDistance = 5;
+            controls.target.set(0, TABLE_FRAME_HEIGHT / 2, 0); 
+            controls.update();
+
+            scene.add(new THREE.AmbientLight(0x404040, 5)); 
+            
+            createTable();
+            
+            if (!document.getElementById('size-selector').children.length) {
+                setupUI();
+            }
+            
+            animate();
+
+            window.removeEventListener('resize', onWindowResize); 
+            window.addEventListener('resize', onWindowResize, false);
+
+            renderer.domElement.removeEventListener('click', onCanvasClick); 
+            renderer.domElement.addEventListener('click', onCanvasClick, false);
+        }
+
+        function onWindowResize() {
+            const container = document.getElementById('scene-container');
+            camera.aspect = container.clientWidth / container.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(container.clientWidth, container.clientHeight);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        function createTable() {
+            const oldTable = scene.getObjectByName('Neon_Table_Group');
+            if (oldTable) scene.remove(oldTable);
+            const oldNeon = scene.getObjectByName('NeonContainer');
+            if (oldNeon) scene.remove(oldNeon);
+            
+            const tableGroup = new THREE.Group();
+            tableGroup.name = "Neon_Table_Group";
+
+            const baseGeometry = new THREE.BoxGeometry(TABLE_WIDTH + 0.05, BASE_THICKNESS, TABLE_DEPTH + 0.05);
+            const baseMaterial = new THREE.MeshStandardMaterial({
+                color: 0x0A0A0A, 
+                metalness: 0.1,
+                roughness: 0.8, 
+            });
+            const baseMesh = new THREE.Mesh(baseGeometry, baseMaterial);
+            baseMesh.position.y = BASE_Y + BASE_THICKNESS / 2;
+            tableGroup.add(baseMesh);
+
+            const innerBaseGeometry = new THREE.BoxGeometry(TABLE_WIDTH, 0.005, TABLE_DEPTH);
+            const innerBaseMaterial = new THREE.MeshStandardMaterial({
+                color: 0x000000,
+                metalness: 0.95,
+                roughness: 0.0, 
+            });
+            const innerBaseMesh = new THREE.Mesh(innerBaseGeometry, innerBaseMaterial);
+            innerBaseMesh.position.y = WORKING_PLANE_Y; 
+            innerBaseMesh.userData.isWorkingPlane = true;
+            tableGroup.add(innerBaseMesh);
+
+            smokedGlassMirrorMaterial = new THREE.MeshPhysicalMaterial({
+                color: 0x222222, 
+                metalness: 0.8, 
+                roughness: 0.1, 
+                opacity: 0.1, 
+                transparent: true,
+                transmission: 0.0, 
+                reflectivity: 0.95, 
+                clearcoat: 1.0,
+                clearcoatRoughness: 0.1,
+                side: THREE.DoubleSide 
+            });
+
+            glassContainer = new THREE.Group();
+            glassContainer.name = 'GlassContainer';
+            const wallHeight = WORKING_PLANE_HEIGHT;
+            const center_Y = BASE_THICKNESS + wallHeight / 2;
+            
+            glassContainer.userData.closedPosition = new THREE.Vector3(0, BASE_THICKNESS, 0); 
+            glassContainer.userData.openPosition = new THREE.Vector3(TABLE_WIDTH * 1.5, BASE_THICKNESS, 0);
+
+            const sides = [
+                new THREE.Mesh(new THREE.BoxGeometry(TABLE_WIDTH, wallHeight, glassThickness), smokedGlassMirrorMaterial),
+                new THREE.Mesh(new THREE.BoxGeometry(TABLE_WIDTH, wallHeight, glassThickness), smokedGlassMirrorMaterial),
+                new THREE.Mesh(new THREE.BoxGeometry(glassThickness, wallHeight, TABLE_DEPTH + 2 * glassThickness), smokedGlassMirrorMaterial),
+                new THREE.Mesh(new THREE.BoxGeometry(glassThickness, wallHeight, TABLE_DEPTH + 2 * glassThickness), smokedGlassMirrorMaterial)
+            ];
+
+            sides[0].position.set(0, center_Y - BASE_THICKNESS, TABLE_DEPTH / 2 + glassThickness / 2);
+            sides[1].position.set(0, center_Y - BASE_THICKNESS, -TABLE_DEPTH / 2 - glassThickness / 2);
+            sides[2].position.set(TABLE_WIDTH / 2 + glassThickness / 2, center_Y - BASE_THICKNESS, 0);
+            sides[3].position.set(-TABLE_WIDTH / 2 - glassThickness / 2, center_Y - BASE_THICKNESS, 0);
+            
+            sides.forEach(s => glassContainer.add(s));
+
+
+            const glassMesh = new THREE.Mesh(new THREE.BoxGeometry(TABLE_WIDTH + 2 * glassThickness, glassThickness, TABLE_DEPTH + 2 * glassThickness), smokedGlassMirrorMaterial);
+            
+            const capY = WORKING_PLANE_HEIGHT + glassThickness / 2;
+            glassMesh.position.y = capY - BASE_THICKNESS; 
+            glassMesh.userData.isGlass = true;
+            glassMesh.userData.name = 'Glass_Cover';
+            glassContainer.add(glassMesh);
+            
+            glassContainer.position.copy(glassContainer.userData.closedPosition); 
+            tableGroup.add(glassContainer);
+
+            scene.add(tableGroup);
+
+            const neonContainer = new THREE.Group();
+            neonContainer.name = 'NeonContainer';
+            neonContainer.position.y = WORKING_PLANE_Y; 
+            scene.add(neonContainer);
+        }
+        
+        function toggleEffect() {
+            isEffectOn = !isEffectOn;
+            const neonContainer = scene.getObjectByName('NeonContainer');
+            const toggleButton = document.getElementById('toggle-effect');
+
+            const newEmissivePower = isEffectOn ? NEON_EMISSIVE_POWER_ON : NEON_EMISSIVE_POWER_OFF;
+            const newReflectivity = isEffectOn ? 0.95 : 0.01; 
+            
+            if (neonContainer) {
+                neonContainer.children.forEach(mesh => {
+                    if (mesh.userData.isNeon && mesh.material) {
+                        mesh.material.emissiveIntensity = newEmissivePower;
+                        mesh.material.needsUpdate = true; 
+                    }
+                });
+            }
+            
+            if (smokedGlassMirrorMaterial) {
+                smokedGlassMirrorMaterial.reflectivity = newReflectivity;
+                smokedGlassMirrorMaterial.needsUpdate = true;
+            }
+
+            if (isEffectOn) {
+                toggleButton.textContent = "Efektleri Kapat (Neon Kapalı)";
+                toggleButton.classList.remove('bg-gray-700'); 
+                toggleButton.classList.add('bg-gray-700/50', 'hover:bg-gray-600');
+            } else {
+                toggleButton.textContent = "Efektleri Aç (Neon Açık)";
+                toggleButton.classList.remove('bg-gray-700/50', 'hover:bg-gray-600');
+                toggleButton.classList.add('bg-gray-700'); 
+            }
+        }
+
+
+        function createNeonObject(color, type) {
+            const hexColor = new THREE.Color(color);
+            const emissivePower = isEffectOn ? NEON_EMISSIVE_POWER_ON : NEON_EMISSIVE_POWER_OFF;
+            
+            const emissiveMaterial = new THREE.MeshBasicMaterial({
+                color: hexColor,
+                emissive: hexColor,
+                emissiveIntensity: emissivePower,
+                side: THREE.DoubleSide
+            });
+
+            let geometry;
+            let length;
+
+            if (type === 'straight') {
+                length = MAX_NEON_HEIGHT; 
+                geometry = new THREE.CylinderGeometry(NEON_RADIUS, NEON_RADIUS, length, 16);
+            } 
+            else if (type === 'zigzag_m') {
+                length = MAX_NEON_HEIGHT * 0.9; 
+                const width = TABLE_WIDTH * 0.35; 
+                
+                const points = [
+                    new THREE.Vector3(-width / 2, -length / 2, 0), 
+                    new THREE.Vector3(-width / 4, length / 2, 0),             
+                    new THREE.Vector3(0, -length / 2 + 0.05, 0), 
+                    new THREE.Vector3(width / 4, length / 2, 0),
+                    new THREE.Vector3(width / 2, -length / 2, 0) 
+                ];
+
+                const customCurve = new THREE.CatmullRomCurve3(points);
+                customCurve.curveType = 'chordal'; 
+                geometry = new THREE.TubeGeometry(customCurve, 64, NEON_RADIUS, 8, false); 
+            }
+            else if (type === 'zigzag_n') {
+                length = MAX_NEON_HEIGHT * 0.9; 
+                const width = TABLE_WIDTH * 0.35;
+
+                const points = [
+                    new THREE.Vector3(-width / 2, -length / 2, 0), 
+                    new THREE.Vector3(-width / 2, length / 2, 0),             
+                    new THREE.Vector3(width / 2, -length / 2 + 0.05, 0), 
+                    new THREE.Vector3(width / 2, length / 2, 0)
+                ];
+
+                const customCurve = new THREE.CatmullRomCurve3(points);
+                customCurve.curveType = 'chordal'; 
+                geometry = new THREE.TubeGeometry(customCurve, 64, NEON_RADIUS, 8, false); 
+            }
+            else if (type === 'v_shape') {
+                length = MAX_NEON_HEIGHT * 0.7;
+                const width = TABLE_WIDTH * 0.3;
+
+                const points = [
+                    new THREE.Vector3(-width / 2, length / 2, 0), 
+                    new THREE.Vector3(0, -length / 2 + 0.05, 0), 
+                    new THREE.Vector3(width / 2, length / 2, 0) 
+                ];
+
+                const customCurve = new THREE.CatmullRomCurve3(points);
+                customCurve.curveType = 'chordal'; 
+                geometry = new THREE.TubeGeometry(customCurve, 32, NEON_RADIUS, 8, false); 
+            }
+            else if (type === 'single_peak') {
+                length = MAX_NEON_HEIGHT * 0.9;
+                const width = TABLE_WIDTH * 0.3;
+
+                const points = [
+                    new THREE.Vector3(-width / 2, -length / 2, 0), 
+                    new THREE.Vector3(0, length / 2, 0), 
+                    new THREE.Vector3(width / 2, -length / 2, 0)
+                ];
+
+                const customCurve = new THREE.CatmullRomCurve3(points);
+                customCurve.curveType = 'chordal'; 
+                geometry = new THREE.TubeGeometry(customCurve, 32, NEON_RADIUS, 8, false); 
+            }
+            else {
+                return null;
+            }
+
+            const neonMesh = new THREE.Mesh(geometry, emissiveMaterial);
+            neonMesh.userData.isNeon = true;
+            neonMesh.userData.color = color;
+            neonMesh.userData.type = type;
+            neonMesh.userData.length = length;
+            neonMesh.userData.id = THREE.MathUtils.generateUUID();
+            
+            const halfWidth = TABLE_WIDTH / 2 - NEON_RADIUS;
+            const halfDepth = TABLE_DEPTH / 2 - NEON_RADIUS;
+
+            neonMesh.position.set(
+                THREE.MathUtils.clamp((Math.random() - 0.5) * TABLE_WIDTH * 0.5, -halfWidth, halfWidth),
+                length / 2, 
+                THREE.MathUtils.clamp((Math.random() - 0.5) * TABLE_DEPTH * 0.5, -halfDepth, halfDepth)
+            );
+            neonMesh.rotation.y = Math.random() * Math.PI * 2; 
+
+            neonElementsData.push({
+                id: neonMesh.userData.id,
+                color: neonMesh.userData.color,
+                type: neonMesh.userData.type,
+                position: neonMesh.position.toArray(), 
+                rotation: neonMesh.rotation.toArray()
+            });
+
+            scene.getObjectByName('NeonContainer').add(neonMesh);
+            return neonMesh;
+        }
+
+        let raycaster = new THREE.Raycaster();
+        let mouse = new THREE.Vector2();
+
+        function onCanvasClick(event) {
+            const rect = renderer.domElement.getBoundingClientRect();
+            mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+            mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+            raycaster.setFromCamera(mouse, camera);
+            
+            const neonContainer = scene.getObjectByName('NeonContainer');
+            if (!neonContainer) return;
+            
+            const intersects = raycaster.intersectObjects(neonContainer.children, false);
+
+            if (intersects.length > 0) {
+                const neonMesh = intersects[0].object;
+                if (neonMesh.userData.isNeon) {
+                    selectNeon(neonMesh);
+                }
+            } else {
+                selectNeon(null); 
+            }
+        }
+        
+        function selectNeon(mesh) {
+            if (selectedNeonObject) {
+                selectedNeonObject.material.needsUpdate = true;
+            }
+            
+            selectedNeonObject = mesh;
+            const infoPanel = document.getElementById('selected-element-info');
+            
+            if (mesh) {
+                controls.target.copy(mesh.getWorldPosition(new THREE.Vector3()));
+                controls.update();
+                
+                infoPanel.classList.remove('hidden');
+                
+                const data = neonElementsData.find(d => d.id === mesh.userData.id);
+                if (data) {
+                    document.getElementById('control-pos-x').value = data.position[0];
+                    document.getElementById('control-pos-z').value = data.position[2];
+                    const rotationYDeg = (data.rotation[1] * 180 / Math.PI) % 360;
+                    document.getElementById('control-rot-y').value = rotationYDeg < 0 ? rotationYDeg + 360 : rotationYDeg;
+                    
+                    document.querySelectorAll('.neon-color-button').forEach(btn => btn.classList.remove('selected'));
+                    const selectedColorButton = document.querySelector(`.neon-color-button[data-color="${data.color}"]`);
+                    if (selectedColorButton) {
+                         selectedColorButton.classList.add('selected');
+                         currentSelectedColor = data.color;
+                    }
+                    
+                    // UX İyileştirmesi için eklenen göstergeleri güncelle
+                    document.getElementById('display-pos-x').textContent = `(${data.position[0].toFixed(2)}m)`;
+                    document.getElementById('display-pos-z').textContent = `(${data.position[2].toFixed(2)}m)`;
+                    document.getElementById('display-rot-y').textContent = `(${rotationYDeg.toFixed(0)}°)`;
+                }
+            } else {
+                infoPanel.classList.add('hidden');
+                controls.target.set(0, TABLE_FRAME_HEIGHT / 2, 0);
+                controls.update();
+                
+                document.querySelectorAll('.neon-color-button').forEach(btn => btn.classList.remove('selected'));
+                document.querySelector(`.neon-color-button[data-color="${currentSelectedColor}"]`)?.classList.add('selected');
+            }
+        }
+
+        function setupUI() {
+            const colorPicker = document.getElementById('color-picker');
+            neonColors.forEach(c => {
+                const button = document.createElement('button');
+                button.className = 'neon-color-button rounded-full transition duration-150 shadow-lg';
+                button.style.backgroundColor = c.hex;
+                button.title = c.name;
+                button.dataset.color = c.hex;
+                button.addEventListener('click', () => {
+                    currentSelectedColor = c.hex;
+                    document.querySelectorAll('.neon-color-button').forEach(btn => btn.classList.remove('selected'));
+                    button.classList.add('selected');
+
+                    if (selectedNeonObject) {
+                        updateNeonColor(selectedNeonObject, c.hex);
+                        saveDesignDebounced();
+                    }
+                });
+                colorPicker.appendChild(button);
+                if (c.hex === currentSelectedColor) {
+                    button.classList.add('selected');
+                }
+            });
+            
+            document.getElementById('toggle-effect').addEventListener('click', toggleEffect);
+
+            const toggleShapesButton = document.getElementById('toggle-shapes');
+            const shapeLibrary = document.getElementById('shape-library');
+            const shapesArrow = document.getElementById('shapes-arrow');
+
+            toggleShapesButton.addEventListener('click', () => {
+                const isHidden = shapeLibrary.classList.toggle('hidden');
+                shapesArrow.classList.toggle('rotate-180', !isHidden);
+            });
+            
+            document.getElementById('add-straight-line').addEventListener('click', () => {
+                const neon = createNeonObject(currentSelectedColor, 'straight');
+                selectNeon(neon);
+                saveDesignDebounced();
+            });
+            document.getElementById('add-zigzag-m-line').addEventListener('click', () => {
+                const neon = createNeonObject(currentSelectedColor, 'zigzag_m');
+                selectNeon(neon);
+                saveDesignDebounced();
+            });
+            document.getElementById('add-zigzag-n-line').addEventListener('click', () => {
+                const neon = createNeonObject(currentSelectedColor, 'zigzag_n');
+                selectNeon(neon);
+                saveDesignDebounced();
+            });
+            document.getElementById('add-v-shape-line').addEventListener('click', () => {
+                const neon = createNeonObject(currentSelectedColor, 'v_shape');
+                selectNeon(neon);
+                saveDesignDebounced();
+            });
+            document.getElementById('add-single-peak-line').addEventListener('click', () => {
+                const neon = createNeonObject(currentSelectedColor, 'single_peak');
+                selectNeon(neon);
+                saveDesignDebounced();
+            });
+
+            document.getElementById('control-pos-x').addEventListener('input', (e) => {
+                if (selectedNeonObject) {
+                    const val = parseFloat(e.target.value);
+                    selectedNeonObject.position.x = val;
+                    updateNeonData(selectedNeonObject);
+                    document.getElementById('display-pos-x').textContent = `(${val.toFixed(2)}m)`;
+                    saveDesignDebounced();
+                }
+            });
+            
+            document.getElementById('control-pos-z').addEventListener('input', (e) => {
+                if (selectedNeonObject) {
+                    const val = parseFloat(e.target.value);
+                    selectedNeonObject.position.z = val;
+                    updateNeonData(selectedNeonObject);
+                    document.getElementById('display-pos-z').textContent = `(${val.toFixed(2)}m)`;
+                    saveDesignDebounced();
+                }
+            });
+            
+            document.getElementById('control-rot-y').addEventListener('input', (e) => {
+                if (selectedNeonObject) {
+                    const val = parseFloat(e.target.value);
+                    selectedNeonObject.rotation.y = val * Math.PI / 180;
+                    updateNeonData(selectedNeonObject);
+                    document.getElementById('display-rot-y').textContent = `(${val.toFixed(0)}°)`;
+                    saveDesignDebounced();
+                }
+            });
+            
+            document.getElementById('remove-neon').addEventListener('click', () => {
+                if (selectedNeonObject) {
+                    removeNeonObject(selectedNeonObject);
+                    selectNeon(null);
+                    saveDesignDebounced();
+                }
+            });
+            document.getElementById('modal-close').addEventListener('click', () => {
+                document.getElementById('modal-container').classList.add('hidden');
+            });
+            
+            const sizeSelector = document.getElementById('size-selector');
+            const currentPriceDisplayFinal = document.getElementById('current-price-final'); 
+            const limitsInfo = document.getElementById('design-limits-info');
+            
+            function updateSizeDisplay() {
+                const currentSize = tableSizes[currentSizeIndex];
+                const priceFormatted = currentSize.price.toLocaleString('tr-TR') + ' TL';
+
+                currentPriceDisplayFinal.textContent = priceFormatted;
+                
+                limitsInfo.innerHTML = `
+                    <p class="text-sm font-semibold text-white mb-1">Neon ve Yazı Sınırları:</p>
+                    <ul class="list-disc ml-4 space-y-1">
+                        <li>M: ${currentSize.limits.m}, A: ${currentSize.limits.a}, V: ${currentSize.limits.v}, N: ${currentSize.limits.n} (Toplam şekil sınırı)</li>
+                        <li class="text-yellow-400">Veya Yazı Ekleme: Yaklaşık ${currentSize.limits.text_cm} alan kullanılabilir (Yazı seçilirse şekil eklenemez).</li>
+                    </ul>
+                `;
+            }
+
+            tableSizes.forEach((size, index) => {
+                const button = document.createElement('button');
+                button.innerHTML = `<span class="font-bold">${size.name}</span><span class="ml-2 text-gray-300">(${size.price.toLocaleString('tr-TR')} TL)</span>`;
+                button.className = 'size-button flex items-center justify-between'; 
+                button.dataset.index = index;
+                
+                if (index === currentSizeIndex) {
+                    button.classList.add('selected');
+                }
+
+                button.addEventListener('click', () => {
+                    if (currentSizeIndex === index) return;
+                    
+                    document.querySelectorAll('.size-button').forEach(btn => btn.classList.remove('selected'));
+                    button.classList.add('selected');
+
+                    currentSizeIndex = index;
+                    
+                    const neonContainer = scene.getObjectByName('NeonContainer');
+                    if (neonContainer) {
+                        neonContainer.children.slice().forEach(child => {
+                            if (child.userData.isNeon) {
+                                child.geometry.dispose();
+                                child.material.dispose();
+                                neonContainer.remove(child);
+                            }
+                        });
+                    }
+                    neonElementsData = []; 
+                    
+                    updateSizeDisplay();
+                    
+                    initThreeJS(); 
+                    showModal("Ebat Güncellemesi", `${size.name} ebatına geçildi. Tasarımınız sıfırlandı. Lütfen yeni ebatta tekrar tasarlayın.`);
+                });
+
+                sizeSelector.appendChild(button);
+            });
+            
+            updateSizeDisplay();
+
+            document.getElementById('toggle-glass').addEventListener('click', () => {
+                if (!glassContainer) return; 
+
+                const closedPos = glassContainer.userData.closedPosition;
+                const openPos = new THREE.Vector3(TABLE_WIDTH * 1.5, BASE_THICKNESS, 0);
+                
+                const isClosed = glassContainer.position.distanceTo(closedPos) < 0.01;
+                const toggleButton = document.getElementById('toggle-glass');
+
+                if (isClosed) { 
+                    glassContainer.position.copy(openPos); 
+                    toggleButton.textContent = "Cam Kapağını Kapat";
+                } else { 
+                    glassContainer.position.copy(closedPos); 
+                    toggleButton.textContent = "Cam Kapağını Kaldır";
+                }
+            });
+
+
+            document.getElementById('order-whatsapp').addEventListener('click', () => {
+                const currentSize = tableSizes[currentSizeIndex];
+                const selectedSize = currentSize.name;
+                const totalPrice = currentSize.price;
+                
+                const designDetails = JSON.stringify(neonElementsData.map(d => ({
+                    type: d.type,
+                    color: d.color,
+                    position_x: d.position[0].toFixed(2),
+                    position_z: d.position[2].toFixed(2),
+                    rotation_y: (d.rotation[1] * 180 / Math.PI).toFixed(0) + ' derece'
+                })), null, 2);
+                
+                const message = `Merhaba, Neon Masa Tasarımım ile ilgili sipariş vermek istiyorum.
+
+* **Seçilen Ebat:** ${selectedSize}
+* **Ebat Fiyatı (KDV Dahil):** ${totalPrice.toLocaleString('tr-TR')} TL
+* **Tasarım Detayları:**
+${designDetails}
+
+Lütfen en kısa zamanda benimle iletişime geçin. (Tasarım ID: ${userId})`;
+
+                const phoneNumber = '905551234567'; 
+                
+                const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+                window.open(whatsappUrl, '_blank');
+            });
+        }
+        
+        function updateNeonData(mesh) {
+            if (!mesh.userData.isNeon) return;
+
+            const halfWidth = TABLE_WIDTH / 2 - NEON_RADIUS;
+            const halfDepth = TABLE_DEPTH / 2 - NEON_RADIUS;
+            
+            mesh.position.x = THREE.MathUtils.clamp(mesh.position.x, -halfWidth, halfWidth);
+            mesh.position.z = THREE.MathUtils.clamp(mesh.position.z, -halfDepth, halfDepth);
+            
+             const data = neonElementsData.find(d => d.id === mesh.userData.id);
+             if (data) {
+                data.position = mesh.position.toArray();
+                data.rotation = mesh.rotation.toArray();
+             }
+        }
+
+        function updateNeonColor(mesh, color) {
+            if (!mesh || !mesh.material) {
+                console.error("updateNeonColor: Mesh veya materyal tanımsız. Renk güncellenemedi.");
+                return;
+            }
+            
+            const hexColor = new THREE.Color(color);
+            mesh.material.color.set(hexColor);
+            mesh.material.emissive.set(hexColor);
+            
+            mesh.material.emissiveIntensity = isEffectOn ? NEON_EMISSIVE_POWER_ON : NEON_EMISSIVE_POWER_OFF;
+            mesh.userData.color = color;
+
+             const data = neonElementsData.find(d => d.id === mesh.userData.id);
+             if (data) {
+                data.color = color;
+             }
+        }
+
+        function removeNeonObject(mesh) {
+            const neonContainer = scene.getObjectByName('NeonContainer');
+            if (neonContainer) {
+                neonContainer.remove(mesh);
+            }
+            neonElementsData = neonElementsData.filter(d => d.id !== mesh.userData.id);
+            mesh.geometry.dispose();
+            mesh.material.dispose();
+        }
+
+        const designDocRef = () => {
+            return doc(
+                db,
+                'artifacts',
+                appId,
+                'users',
+                userId,
+                'designs', 
+                'neon_table_design' 
+            );
+        };
+
+        const DEBOUNCE_DELAY = 1000; 
+        let saveTimeout = null;
+
+        function saveDesignDebounced() {
+            clearTimeout(saveTimeout);
+            saveTimeout = setTimeout(() => {
+                saveUserDesign();
+            }, DEBOUNCE_DELAY);
+        }
+
+        async function saveUserDesign() {
+            if (!db || !userId || userId === 'anon_user') {
+                console.warn("Kullanıcı kimliği veya Firebase hazır değil. Kaydetme işlemi iptal edildi.");
+                return;
+            }
+            
+            const savePayload = {
+                version: 2, 
+                lastUpdated: Date.now(),
+                selectedSizeIndex: currentSizeIndex, 
+                neonElements: JSON.stringify(neonElementsData) 
+            };
+
+            try {
+                await setDoc(designDocRef(), savePayload);
+                console.log("Tasarım başarıyla kaydedildi!");
+            } catch (error) {
+                console.error("Tasarım kaydetme hatası:", error);
+                showModal("Kaydetme Hatası", "Tasarım kaydedilirken bir sorun oluştu.");
+            }
+        }
+
+        async function loadUserDesign() {
+            if (!db || !userId) {
+                 console.warn("Kullanıcı kimliği veya Firebase hazır değil. Yükleme iptal edildi.");
+                return;
+            }
+            
+            const loadButton = document.getElementById('load-design');
+            loadButton.textContent = 'Yükleniyor...';
+            loadButton.disabled = true;
+
+            try {
+                const docSnap = await getDoc(designDocRef());
+
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    
+                    const loadedSizeIndex = data.selectedSizeIndex !== undefined ? data.selectedSizeIndex : 1;
+                    
+                    if (loadedSizeIndex !== currentSizeIndex) {
+                        currentSizeIndex = loadedSizeIndex;
+                        
+                        document.querySelectorAll('.size-button').forEach(btn => btn.classList.remove('selected'));
+                        
+                        const selectedSizeButton = document.querySelector(`#size-selector button[data-index="${currentSizeIndex}"]`);
+                        if(selectedSizeButton) selectedSizeButton.classList.add('selected');
+                        
+                        const currentSize = tableSizes[currentSizeIndex];
+                        TABLE_WIDTH = currentSize.width;
+                        TABLE_DEPTH = currentSize.depth;
+                        TABLE_FRAME_HEIGHT = currentSize.height;
+                        WORKING_PLANE_HEIGHT = TABLE_FRAME_HEIGHT - BASE_THICKNESS;
+                        
+                        const neonContainer = scene.getObjectByName('NeonContainer');
+                        if (neonContainer) {
+                            neonContainer.children.slice().forEach(child => {
+                                if (child.userData.isNeon) {
+                                    child.geometry.dispose();
+                                    child.material.dispose();
+                                    neonContainer.remove(child);
+                                }
+                            });
+                        }
+                        
+                        camera.position.set(TABLE_WIDTH * 2, TABLE_FRAME_HEIGHT * 2, TABLE_DEPTH * 2);
+                        controls.target.set(0, TABLE_FRAME_HEIGHT / 2, 0); 
+                        controls.update();
+
+                        createTable(); 
+                        
+                        document.getElementById('current-price-final').textContent = `${currentSize.price.toLocaleString('tr-TR')} TL`;
+                         updateSizeDisplay();
+                    }
+
+
+                    if (data.neonElements) {
+                        const loadedData = JSON.parse(data.neonElements);
+                        
+                        const neonContainer = scene.getObjectByName('NeonContainer');
+                        if (neonContainer) {
+                            neonContainer.children.forEach(child => {
+                                if (child.userData.isNeon) {
+                                    child.geometry.dispose();
+                                    child.material.dispose();
+                                    neonContainer.remove(child);
+                                }
+                            });
+                        }
+                        neonElementsData = [];
+
+                        loadedData.forEach(data => {
+                            const mesh = createNeonObject(data.color, data.type);
+                            mesh.position.fromArray(data.position);
+                            mesh.rotation.fromArray(data.rotation);
+                            updateNeonData(mesh); 
+                        });
+
+                        showModal("Yükleme Başarılı", `Kaydedilmiş ${loadedData.length} adet neon öğesi yüklendi.`);
+                    }
+                } else {
+                    console.log("Kayıtlı bir tasarım bulunamadı.");
+                    showModal("Bilgi", "Kayıtlı bir tasarım bulunamadı. Yeni bir tasarımla başlayın.");
+                }
+            } catch (error) {
+                console.error("Tasarım yükleme hatası:", error);
+                showModal("Yükleme Hatası", "Tasarım yüklenirken bir sorun oluştu.");
+            } finally {
+                loadButton.textContent = 'Yükle';
+                loadButton.disabled = false;
+            }
+        }
+
+        function startApplication() {
+            initThreeJS();
+            initializeFirebase();
+        }
+
+        window.onload = startApplication;
+    </script>
+    
+    <style>
+        /* Ana Tema Stilleri */
+        body {
+            overflow: hidden;
+            background-color: #0D1117; /* Ultra Koyu */
+        }
+        #scene-container {
+            flex-grow: 1;
+        }
+        canvas {
+            display: block;
+        }
+        
+        /* Glassmorphism Uygulaması */
+        .ui-card {
+            background-color: var(--tw-color-glass-bg); /* Koyu şeffaf arkaplan */
+            backdrop-filter: blur(30px) saturate(180%); /* Buzlu cam efekti güçlendirildi */
+            -webkit-backdrop-filter: blur(30px) saturate(180%);
+            border: 1px solid var(--tw-color-glass-border); /* İnce beyaz sınır */
+            border-radius: 20px; 
+            color: #E5E7EB; 
+            box-shadow: var(--tw-box-shadow-glass-deep); 
+            min-width: 300px; 
+        }
+        .glass-module {
+            background-color: rgba(10, 25, 40, 0.7); /* Modül içi biraz daha opak ve derin */
+            border: 1px solid rgba(255, 255, 255, 0.08); /* Daha belirgin iç sınır */
+            border-radius: 14px;
+        }
+        
+        /* Neon Renk Seçici Stilizasyonu */
+        .neon-color-button {
+            width: 40px; /* Biraz büyütüldü */
+            height: 40px;
+            border: 3px solid transparent;
+            transition: transform 0.2s, box-shadow 0.3s;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+            outline: none;
+        }
+        .neon-color-button.selected {
+            border-color: #FFFFFF;
+            transform: scale(1.18); /* Vurgu artırıldı */
+            box-shadow: 0 0 25px rgba(255, 255, 255, 0.9), 0 0 12px currentColor; /* Renk parlaması güçlendirildi */
+        }
+
+        /* Ebat Seçim Butonları */
+        .size-button {
+            /* Fiyat bilgisi de eklendiği için hizalama ayarı */
+            @apply w-full block bg-glass-surface hover:bg-glass-surface/50 text-white font-medium py-3 px-4 rounded-xl cursor-pointer transition duration-200 shadow-md border border-glass-border/50;
+        }
+        .size-button.selected {
+            @apply bg-neon-accent/90 text-white font-semibold shadow-glow-blue border-neon-accent/60 transform scale-[1.01];
+        }
+
+        /* Responsive Kontrol Paneli (Apple UI Hissiyatı) */
+        @media (max-width: 1024px) {
+            main {
+                flex-direction: column-reverse; /* Kontrolleri alta al */
+            }
+            #controls-wrapper {
+                width: 100%;
+                max-height: 60vh; 
+                border-radius: 20px 20px 0 0;
+            }
+            #scene-container {
+                height: 40vh; 
+            }
+        }
+        
+        /* Scrollbar İyileştirmesi (Apple Tarzı İnce Çubuk) */
+        #controls-scroll-area {
+            overflow-y: scroll; 
+            scrollbar-width: thin;
+            scrollbar-color: #4B5563 #0D1117;
+        }
+        #controls-scroll-area::-webkit-scrollbar {
+            width: 8px; /* Kalınlık artırıldı */
+        }
+        #controls-scroll-area::-webkit-scrollbar-thumb {
+            background-color: #6B7280; /* Daha açık gri ton */
+            border-radius: 4px;
+        }
+        #controls-scroll-area::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05); /* Şeffaf zemin */
+        }
+        
+        /* Range Slider İyileştirmesi */
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px; 
+            height: 16px;
+            border-radius: 50%;
+            background: #3B82F6; /* Neon aksan rengi */
+            cursor: pointer;
+            box-shadow: 0 0 5px rgba(59, 130, 246, 0.8);
+            margin-top: -6px;
+        }
+        input[type=range] {
+            @apply h-2 bg-gray-700/70 rounded-lg appearance-none cursor-pointer;
+        }
+    </style>
+</head>
+<body class="font-sans">
+
+    <div class="h-screen flex flex-col">
+        <header class="p-4 shadow-2xl flex justify-between items-center text-white sticky top-0 z-20 h-16 bg-dark-bg/90 backdrop-blur-lg border-b border-gray-800">
+            <div class="flex items-center">
+                <img src="https://neonbirr.com/cdn/shop/files/cropped-cropped-Yeni-Proje-24.webp?v=1696324634&width=90" alt="Neon Masa Logo" class="h-8 mr-4 rounded-lg shadow-xl" title="Neon Masa Konfigüratörü">
+                <span class="text-xl font-light tracking-wide hidden sm:block">NEON MASA TASARIM PLATFORMU</span>
+            </div>
+            <div id="user-info" class="text-xs px-4 py-2 rounded-full bg-glass-surface border border-glass-border/70 transform transition-transform duration-200 hover:scale-[1.02]">
+                <span class="text-gray-400">Kullanıcı ID:</span> <span id="user-id-display" class="font-mono text-neon-accent font-medium">Yükleniyor...</span>
+            </div>
+        </header>
+
+        <main class="flex-grow flex">
+
+            <div id="controls-wrapper" class="w-full lg:w-[420px] max-w-lg p-6 lg:p-8 ui-card flex flex-col z-10">
+                
+                <h2 class="text-3xl font-extrabold mb-6 text-white tracking-tight">Tasarım Kontrolleri</h2>
+                
+                <div id="controls-scroll-area" class="flex-grow overflow-y-auto pr-3 space-y-7 pb-8">
+                    
+                    <div class="glass-module p-4 rounded-xl shadow-xl space-y-4">
+                        <label class="block text-xl font-bold text-neon-accent/90 border-b border-glass-border pb-2 mb-3">1. Masa Ebatını Seçin</label>
+                        <div id="size-selector" class="space-y-3">
+                            </div>
+                    </div>
+
+                    <div class="glass-module p-4 rounded-xl shadow-xl">
+                        <label class="block text-xl font-bold text-neon-accent/90 border-b border-glass-border pb-2 mb-3">2. Neon Rengi Seçin</label>
+                        <div id="color-picker" class="flex gap-4 p-2 flex-wrap justify-center sm:justify-start">
+                            </div>
+                    </div>
+                    
+                    <div class="space-y-3">
+                        <button id="toggle-shapes" class="w-full bg-primary-apple/90 hover:bg-primary-apple text-white font-bold py-3 px-4 rounded-xl transition duration-200 flex justify-between items-center shadow-lg transform hover:scale-[1.01]">
+                            <span class="text-xl">3. Şekil Ekle / Kütüphanesi</span>
+                            <svg id="shapes-arrow" class="w-6 h-6 transform transition-transform duration-300 rotate-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </button>
+                        
+                        <div id="shape-library" class="hidden p-4 glass-module rounded-xl shadow-xl">
+                            <button id="add-straight-line" class="w-full bg-neon-accent hover:bg-neon-accent/90 text-white font-bold py-3 px-4 rounded-xl mb-4 transition duration-150 shadow-md">
+                                Düz Neon Çubuk Ekle (40cm Standart)
+                            </button>
+                            <div class="grid grid-cols-4 gap-3">
+                                 <button id="add-zigzag-m-line" class="shape-button flex flex-col items-center justify-center p-3 glass-module rounded-lg transition duration-150 text-yellow-300 hover:bg-gray-700/50" title="M Şekli Ekle">
+                                    <svg class="w-8 h-8" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="currentColor" stroke-width="8" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M 10 90 L 35 10 L 60 90 L 85 10 L 90 90" />
+                                    </svg>
+                                    <span class="text-xs mt-1">M Şekli</span>
+                                </button>
+                                <button id="add-zigzag-n-line" class="shape-button flex flex-col items-center justify-center p-3 glass-module rounded-lg transition duration-150 text-cyan-300 hover:bg-gray-700/50" title="N Harfi Ekle">
+                                    <svg class="w-8 h-8" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="currentColor" stroke-width="8" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M 10 90 L 10 10 L 90 90 L 90 10" />
+                                    </svg>
+                                    <span class="text-xs mt-1">N Harfi</span>
+                                </button>
+                                <button id="add-v-shape-line" class="shape-button flex flex-col items-center justify-center p-3 glass-module rounded-lg transition duration-150 text-lime-300 hover:bg-gray-700/50" title="V Harfi Ekle">
+                                    <svg class="w-8 h-8" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="currentColor" stroke-width="8" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M 10 10 L 50 90 L 90 10" />
+                                    </svg>
+                                    <span class="text-xs mt-1">V Harfi</span>
+                                </button>
+                                <button id="add-single-peak-line" class="shape-button flex flex-col items-center justify-center p-3 glass-module rounded-lg transition duration-150 text-pink-300 hover:bg-gray-700/50" title="A Harfi Ekle">
+                                    <svg class="w-8 h-8" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="currentColor" stroke-width="8" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M 10 90 L 50 10 L 90 90" />
+                                    </svg>
+                                    <span class="text-xs mt-1">A Harfi</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="selected-element-info" class="glass-module p-5 rounded-xl shadow-xl border border-neon-accent/50 hidden">
+                        <p class="font-bold text-xl text-neon-accent mb-4 border-b border-glass-border pb-2">4. Seçili Öğeyi Düzenle</p>
+                        
+                        <div class="mb-4">
+                            <label for="control-pos-x" class="block text-sm font-medium mb-2 text-gray-300 flex justify-between">
+                                <span>X Konumu (En)</span>
+                                <span id="display-pos-x" class="font-mono text-sm text-yellow-300/80"></span> 
+                            </label>
+                            <input type="range" id="control-pos-x" min="-0.4" max="0.4" step="0.01" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer range-lg">
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="control-pos-z" class="block text-sm font-medium mb-2 text-gray-300 flex justify-between">
+                                <span>Z Konumu (Boy)</span>
+                                <span id="display-pos-z" class="font-mono text-sm text-yellow-300/80"></span>
+                            </label>
+                            <input type="range" id="control-pos-z" min="-0.2" max="0.2" step="0.01" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer range-lg">
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="control-rot-y" class="block text-sm font-medium mb-2 text-gray-300 flex justify-between">
+                                <span>Y Rotasyonu (Düzlemde)</span>
+                                <span id="display-rot-y" class="font-mono text-sm text-yellow-300/80"></span>
+                            </label>
+                            <input type="range" id="control-rot-y" min="0" max="360" step="5" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer range-lg">
+                        </div>
+
+                        <button id="remove-neon" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-xl mt-3 transition duration-150 shadow-md transform hover:scale-[1.01] border border-red-500/50">
+                            Seçili Öğeyi Sil
+                        </button>
+                    </div>
+                    
+                    <div class="glass-module p-4 rounded-xl shadow-xl space-y-3">
+                        <p class="font-bold text-xl text-neon-accent/90 border-b border-glass-border pb-2">Araçlar ve Görünüm</p>
+
+                        <div id="design-limits-info" class="text-xs text-gray-400 p-3 rounded-xl bg-dark-bg/50 border border-glass-border/70 shadow-inner">
+                            </div>
+                        
+                        <button id="toggle-glass" class="w-full bg-gray-700/50 hover:bg-gray-600/70 text-white font-bold py-2 px-4 rounded-lg transition duration-150 shadow-md border border-glass-border/50">
+                            Cam Kapağını Kaldır
+                        </button>
+                        
+                        <button id="toggle-effect" class="w-full bg-gray-700/50 hover:bg-gray-600/70 text-white font-bold py-2 px-4 rounded-lg transition duration-150 shadow-md border border-glass-border/50">
+                            Efektleri Kapat (Neon Kapalı)
+                        </button>
+                        
+                        <div class="flex space-x-3 pt-2">
+                            <button id="save-design" class="w-1/2 bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg transition duration-150 shadow-md transform hover:scale-[1.01]">
+                            Kaydet
+                            </button>
+                            <button id="load-design" class="w-1/2 bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-bold py-2 px-4 rounded-lg transition duration-150 shadow-md transform hover:scale-[1.01]">
+                                Yükle
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="pt-6 mt-4 border-t border-glass-border/50">
+                        <div class="text-center mb-4 p-4 bg-glass-surface rounded-xl shadow-inner border border-glass-border/50">
+                            <p class="text-md font-light text-gray-300">Toplam Konfigürasyon Fiyatı:</p>
+                            <p id="current-price-final" class="text-5xl font-extrabold text-white mt-2 tracking-wider">20.000 TL</p>
+                            <p class="text-xs text-gray-400 mt-1">KDV dahil, seçilen ebat fiyatıdır. Ek ücretler için WhatsApp üzerinden iletişime geçiniz.</p>
+                        </div>
+
+                        <button id="order-whatsapp" class="w-full bg-[#25D366] hover:bg-[#128C7E] text-white font-bold py-4 px-4 rounded-xl text-xl transition duration-150 shadow-2xl shadow-[#25D366]/60 flex items-center justify-center transform hover:scale-[1.02]">
+                            <svg class="w-6 h-6 mr-3" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M12.039 2c-5.584 0-10.126 4.542-10.126 10.126 0 1.748.44 3.421 1.284 4.887l-1.34 4.904 5.025-1.315c1.42.54 3.09 1.284 4.837 1.284h.01c5.584 0 10.126-4.542 10.126-10.126s-4.542-10.126-10.126-10.126zm0 18.42c-2.88 0-5.55-.916-7.85-2.52l-.56-.334-3.13.82.83-3.045-.357-.577c-1.64-2.483-2.5-5.32-2.5-8.26 0-4.634 3.766-8.4 8.4-8.4s8.4 3.766 8.4 8.4-3.766 8.4-8.4 8.4zm4.456-6.19c-.244-.122-.962-.477-1.11-.532-.148-.054-.256-.08-.363.08-.107.155-.417.532-.51.64-.093.107-.186.12-.34.037-.154-.08-2.618-1.615-4.997-3.084-.397-.243-.666-.41-2.843-1.745-.246-.145-.353-.2-.407-.225-.053-.027-.42-.032-.816-.032-.397 0-.962.122-1.306.61-.345.488-1.307 1.272-1.307 3.107 0 1.835 1.522 3.593 1.522 3.84 0 .002.396.488.908 1.05.512.56.962.748 1.805.975.842.227 1.73.197 2.37.133.64-.06 1.87-.76 2.14-1.503.268-.743.268-1.373.185-1.503-.082-.13-.148-.155-.303-.236z"/>
+                            </svg>
+                            SİPARİŞİ TAMAMLA (WhatsApp Destek Hattı)
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="scene-container" class="flex-grow bg-dark-bg relative">
+                <div id="loading-overlay" class="absolute inset-0 bg-gray-900/90 flex items-center justify-center z-10 text-white text-2xl font-light tracking-widest animate-pulse">
+                    3D Sahne Yükleniyor...
+                </div>
+                </div>
+        </main>
+        
+        <footer class="bg-dark-bg p-2 text-center text-xs text-gray-500 border-t border-gray-800">
+            Profesyonel İpucu: Tasarımı döndürmek için farenin sol tuşunu, yakınlaştırmak için tekerleği kullanın. Öğeyi seçmek için üzerine tek tıklayın.
+        </footer>
+    </div>
+
+    <div id="modal-container" class="hidden fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="ui-card p-8 rounded-3xl shadow-glass-deep max-w-md w-full text-white border-2 border-primary-apple/30">
+            <h3 id="modal-title" class="text-2xl font-extrabold mb-4 text-primary-apple">Başlık</h3>
+            <p id="modal-message" class="mb-6 text-gray-200 text-lg">Mesaj içeriği.</p>
+            <div class="flex justify-end">
+                <button id="modal-close" class="bg-gray-700/50 hover:bg-gray-600 text-white font-bold py-2 px-5 rounded-xl transition duration-150 border border-glass-border/70">
+                    Kapat
+                </button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
