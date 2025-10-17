@@ -59,10 +59,7 @@
         window.setLogLevel = setLogLevel;
         
         // **********************************************
-        // DİKKAT: Buradaki büyük JavaScript modülü, tüm
-        // Three.js ve Firebase işlevselliğini barındırır.
-        // ID'leri ve fonksiyonelliği korumak için,
-        // bu kod bloğu tamamen orijinal bırakılmıştır.
+        // JS İşlevselliği
         // **********************************************
 
         let scene, camera, renderer, controls;
@@ -75,7 +72,7 @@
         let isEffectOn = true; 
         const NEON_EMISSIVE_POWER_ON = 1.0;
         const NEON_EMISSIVE_POWER_OFF = 0.01; 
-        let currentStep = 1; // YENİ: Adım takibi
+        let currentStep = 1; 
 
         const neonColors = [
             { name: "Mavi", hex: "#00FFFF" },
@@ -518,7 +515,6 @@
                 controls.target.copy(mesh.getWorldPosition(new THREE.Vector3()));
                 controls.update();
                 
-                // Sadece 2. Adımda ise göster
                 if (currentStep === 2) {
                     infoPanel.classList.remove('hidden');
                 } else {
@@ -539,7 +535,6 @@
                          currentSelectedColor = data.color;
                     }
                     
-                    // UX İyileştirmesi için eklenen göstergeleri güncelle
                     document.getElementById('display-pos-x').textContent = `(${data.position[0].toFixed(2)}m)`;
                     document.getElementById('display-pos-z').textContent = `(${data.position[2].toFixed(2)}m)`;
                     document.getElementById('display-rot-y').textContent = `(${rotationYDeg.toFixed(0)}°)`;
@@ -554,7 +549,6 @@
             }
         }
 
-        // YENİ: Adım Yönetimi Fonksiyonları
         function showStep(stepNumber) {
             currentStep = stepNumber;
             document.querySelectorAll('.step-content').forEach(el => el.classList.add('hidden'));
@@ -566,7 +560,6 @@
             
             document.getElementById('step-display').textContent = `ADIM ${stepNumber} / 3`;
 
-            // Step 2'de neon seçimi yoksa düzenleme panelini gizle
             if (stepNumber === 2) {
                  if (selectedNeonObject) {
                     document.getElementById('selected-element-info').classList.remove('hidden');
@@ -575,23 +568,21 @@
                  }
             }
             
-            // Step 3 (Özet) için bilgileri güncelle
             if (stepNumber === 3) {
                 const limitsInfo = document.getElementById('design-limits-info-step3'); 
                 const currentSize = tableSizes[currentSizeIndex];
                 
-                // Detaylı özet yapısı
                 const neonSummary = neonElementsData.map(d => 
-                    `<li>Tip: ${d.type}, Renk: ${neonColors.find(c => c.hex === d.color)?.name || d.color}</li>`
+                    `<li>Tip: ${d.type}, Renk: ${neonColors.find(c => c.hex === d.color)?.name || d.color} - Konum: X:${d.position[0].toFixed(2)}, Z:${d.position[2].toFixed(2)}</li>`
                 ).join('');
 
                 limitsInfo.innerHTML = `
-                    <p class="text-lg font-bold text-neon-accent mb-2">Seçilen Ebat: ${currentSize.name} (${currentSize.price.toLocaleString('tr-TR')} TL)</p>
+                    <p class="text-lg font-bold text-neon-accent mb-2">Seçilen Ebat: ${currentSize.name}</p>
                     <div class="p-3 rounded-xl bg-dark-bg/60 border border-glass-border/70 shadow-inner">
-                        <p class="text-sm font-semibold text-white mb-2">Neon ve Yazı Sınırları (Seçtiğiniz Ebat İçin):</p>
+                        <p class="text-sm font-semibold text-white mb-2">Masa Sınırları:</p>
                         <ul class="list-disc ml-4 space-y-1 text-gray-300">
-                            <li>M: ${currentSize.limits.m}, A: ${currentSize.limits.a}, V: ${currentSize.limits.v}, N: ${currentSize.limits.n} (Toplam şekil sınırı)</li>
-                            <li class="text-yellow-300">Veya Yazı Ekleme: Yaklaşık ${currentSize.limits.text_cm} alan kullanılabilir.</li>
+                            <li>Toplam Şekil Sınırları: M: ${currentSize.limits.m}, A: ${currentSize.limits.a}, V: ${currentSize.limits.v}, N: ${currentSize.limits.n}</li>
+                            <li class="text-yellow-300">Yazı Alanı: Yaklaşık ${currentSize.limits.text_cm}</li>
                         </ul>
                     </div>
                     
@@ -607,16 +598,13 @@
             document.getElementById('controls-scroll-area').scrollTo(0, 0);
         }
 
-        // YENİ: Ebat Değişikliğinde Akışı Yönetme Fonksiyonu
         function updateFlowAfterSizeChange(newIndex, size) {
             currentSizeIndex = newIndex;
             
-            // UI'ı güncelle
             document.querySelectorAll('.size-button').forEach(btn => btn.classList.remove('selected'));
             const selectedSizeButton = document.querySelector(`#size-selector button[data-index="${currentSizeIndex}"]`);
             if(selectedSizeButton) selectedSizeButton.classList.add('selected');
 
-            // 3D sahnesini sıfırla
             const neonContainer = scene.getObjectByName('NeonContainer');
             if (neonContainer) {
                 neonContainer.children.slice().forEach(child => {
@@ -631,13 +619,10 @@
             
             updateSizeDisplay();
             
-            // 3D sahneyi yeniden kur (yeni boyuta göre)
             initThreeJS(); 
             
-            // Kullanıcıya bilgi ver ve Adım 2'ye geçmesini sağla
             showModal("Ebat Güncellemesi", `${size.name} ebatına geçildi. Tasarımınız sıfırlandı. Lütfen yeni ebatta tekrar tasarlayın.`);
             
-            // Ebat seçildi, ilerleme butonunu etkinleştir
             const nextButton = document.getElementById('next-step-1');
             if (nextButton) {
                  nextButton.disabled = false;
@@ -649,7 +634,6 @@
             const currentSize = tableSizes[currentSizeIndex];
             const priceFormatted = currentSize.price.toLocaleString('tr-TR') + ' TL';
 
-            // Fiyatı güncelle
             document.getElementById('current-price-final').textContent = priceFormatted;
         }
 
@@ -755,7 +739,7 @@
                 document.getElementById('modal-container').classList.add('hidden');
             });
             
-            // YENİ: AKIŞ KONTROL BUTONLARI
+            // AKIŞ KONTROL BUTONLARI
             document.getElementById('next-step-1').addEventListener('click', () => {
                 if (document.querySelector('.size-button.selected')) {
                      showStep(2);
@@ -783,19 +767,17 @@
 
                 button.addEventListener('click', () => {
                     if (currentSizeIndex === index) {
-                         // Aynı boyuta tekrar tıklanırsa sadece fiyatı güncelle ve çık
                          updateSizeDisplay();
                          return;
                     }
                     
-                    // Yeni akış fonksiyonunu çağır
                     updateFlowAfterSizeChange(index, size);
                 });
 
                 sizeSelector.appendChild(button);
             });
             
-            updateSizeDisplay(); // Başlangıç fiyatını ayarla
+            updateSizeDisplay(); 
 
             document.getElementById('toggle-glass').addEventListener('click', () => {
                 if (!glassContainer) return; 
@@ -848,7 +830,6 @@ Lütfen en kısa zamanda benimle iletişime geçin. (Tasarım ID: ${userId})`;
                 window.open(whatsappUrl, '_blank');
             });
             
-            // Başlangıçta 1. Adımı göster ve ilerleme butonunu kontrol et
             showStep(1);
              const initialSizeButton = document.querySelector(`.size-button[data-index="${currentSizeIndex}"]`);
             if(!initialSizeButton || !initialSizeButton.classList.contains('selected')) {
@@ -1026,12 +1007,12 @@ Lütfen en kısa zamanda benimle iletişime geçin. (Tasarım ID: ${userId})`;
                         });
 
                         showModal("Yükleme Başarılı", `Kaydedilmiş ${loadedData.length} adet neon öğesi yüklendi.`);
-                        showStep(2); // Yükleme başarılı, Tasarım adımına geç
+                        showStep(2); 
                     }
                 } else {
                     console.log("Kayıtlı bir tasarım bulunamadı.");
                     showModal("Bilgi", "Kayıtlı bir tasarım bulunamadı. Yeni bir tasarımla başlayın.");
-                    showStep(1); // Kayıt yoksa Step 1'i göster
+                    showStep(1); 
                 }
             } catch (error) {
                 console.error("Tasarım yükleme hatası:", error);
@@ -1054,7 +1035,7 @@ Lütfen en kısa zamanda benimle iletişime geçin. (Tasarım ID: ${userId})`;
         /* Ana Tema Stilleri */
         body {
             overflow: hidden;
-            background-color: #080A0E; /* Ultra Koyu */
+            background-color: #080A0E; 
         }
         #scene-container {
             flex-grow: 1;
@@ -1065,24 +1046,24 @@ Lütfen en kısa zamanda benimle iletişime geçin. (Tasarım ID: ${userId})`;
         
         /* Glassmorphism Uygulaması (2025 Refined) */
         .ui-card {
-            background-color: var(--tw-color-glass-bg); /* Koyu şeffaf arkaplan */
-            backdrop-filter: blur(40px) saturate(200%); /* Buzlu cam efekti GÜÇLENDİRİLDİ */
+            background-color: var(--tw-color-glass-bg); 
+            backdrop-filter: blur(40px) saturate(200%); 
             -webkit-backdrop-filter: blur(40px) saturate(200%);
-            border: 2px solid var(--tw-color-glass-border); /* Sınır KALINLAŞTIRILDI */
-            border-radius: 24px; /* Daha yuvarlak */
+            border: 2px solid var(--tw-color-glass-border); 
+            border-radius: 24px; 
             color: #E5E7EB; 
-            box-shadow: var(--tw-box-shadow-glass-deep); /* Floating/Spatial etki */
+            box-shadow: var(--tw-box-shadow-glass-deep); 
             min-width: 300px; 
         }
         .glass-module {
-            background-color: rgba(12, 30, 50, 0.85); /* Modül içi daha opak ve derin */
-            border: 1px solid rgba(255, 255, 255, 0.12); /* Daha belirgin iç sınır */
-            border-radius: 16px; /* Hafif yuvarlama artırıldı */
+            background-color: rgba(12, 30, 50, 0.85); 
+            border: 1px solid rgba(255, 255, 255, 0.12); 
+            border-radius: 16px; 
         }
         
         /* Neon Renk Seçici Stilizasyonu (Daha Canlı Seçim) */
         .neon-color-button {
-            width: 44px; /* Biraz daha büyütüldü */
+            width: 44px; 
             height: 44px;
             border: 4px solid transparent;
             transition: transform 0.2s, box-shadow 0.3s, border-color 0.2s;
@@ -1090,18 +1071,16 @@ Lütfen en kısa zamanda benimle iletişime geçin. (Tasarım ID: ${userId})`;
             outline: none;
         }
         .neon-color-button.selected {
-            border-color: var(--tw-color-neon-accent); /* Kendi rengiyle sınır belirginleşti */
-            transform: scale(1.2); /* Vurgu artırıldı */
-            box-shadow: 0 0 30px rgba(255, 255, 255, 1), 0 0 15px currentColor; /* Beyaz ve renk parlaması */
+            border-color: var(--tw-color-neon-accent); 
+            transform: scale(1.2); 
+            box-shadow: 0 0 30px rgba(255, 255, 255, 1), 0 0 15px currentColor; 
         }
 
         /* Ebat Seçim Butonları (Chip Stili) */
         .size-button {
-            /* Fiyat bilgisi de eklendiği için hizalama ayarı */
             @apply w-full block bg-glass-surface hover:bg-glass-surface/50 text-white font-medium py-3 px-4 rounded-xl cursor-pointer transition duration-200 shadow-lg border border-glass-border/70;
         }
         .size-button.selected {
-            /* Yeni neon aksan rengi ve güçlü glow */
             @apply bg-neon-accent/90 text-dark-bg font-extrabold shadow-glow-blue border-neon-accent transform scale-[1.02];
         }
 
@@ -1127,27 +1106,27 @@ Lütfen en kısa zamanda benimle iletişime geçin. (Tasarım ID: ${userId})`;
             scrollbar-color: #6B7280 #080A0E;
         }
         #controls-scroll-area::-webkit-scrollbar {
-            width: 10px; /* Kalınlık artırıldı */
+            width: 10px; 
         }
         #controls-scroll-area::-webkit-scrollbar-thumb {
-            background-color: #6B7280; /* Daha açık gri ton */
+            background-color: #6B7280; 
             border-radius: 5px;
             border: 2px solid transparent;
             background-clip: padding-box;
         }
         #controls-scroll-area::-webkit-scrollbar-track {
-            background: rgba(255, 255, 255, 0.05); /* Şeffaf zemin */
+            background: rgba(255, 255, 255, 0.05); 
         }
         
         /* Range Slider İyileştirmesi (Neon Accent) */
         input[type=range]::-webkit-slider-thumb {
             -webkit-appearance: none;
-            width: 18px; /* Daha büyük thumb */
+            width: 18px; 
             height: 18px;
             border-radius: 50%;
-            background: var(--tw-color-neon-accent); /* Neon aksan rengi */
+            background: var(--tw-color-neon-accent); 
             cursor: pointer;
-            box-shadow: 0 0 8px var(--tw-color-neon-accent); /* Hafif glow */
+            box-shadow: 0 0 8px var(--tw-color-neon-accent); 
             margin-top: -8px;
         }
         input[type=range] {
@@ -1170,7 +1149,7 @@ Lütfen en kısa zamanda benimle iletişime geçin. (Tasarım ID: ${userId})`;
 
         <main class="flex-grow flex">
 
-            <div id="controls-wrapper" class="w-full lg:w-[420px] max-w-lg p-8 lg:p-10 ui-card flex flex-col z-10 flex-shrink-0 min-h-0 max-h-full">
+            <div id="controls-wrapper" class="w-full lg:w-[420px] max-w-lg p-8 lg:p-10 ui-card flex flex-col z-10 flex-shrink-0 min-h-0 lg:h-full">
                 
                 <h2 class="text-3xl font-extrabold mb-8 text-white tracking-tight text-neon-accent flex justify-between items-center">
                     <span>Tasarım Kontrolleri</span>
@@ -1182,6 +1161,7 @@ Lütfen en kısa zamanda benimle iletişime geçin. (Tasarım ID: ${userId})`;
                     <div id="step-1" class="step-content">
                         <div class="glass-module p-5 rounded-xl shadow-xl space-y-4">
                             <label class="block text-2xl font-bold text-white/90 border-b border-glass-border pb-3 mb-4">1. Masa Ebatını Seçin</label>
+                            <p class="text-gray-400 text-sm mb-4">Lütfen tasarımınıza uygun masa ebatını seçerek başlayın.</p>
                             <div id="size-selector" class="space-y-4">
                                 </div>
                         </div>
@@ -1197,15 +1177,37 @@ Lütfen en kısa zamanda benimle iletişime geçin. (Tasarım ID: ${userId})`;
                             &larr; Ebat Seçimine Geri Dön
                         </button>
 
+                        <div class="glass-module p-5 rounded-xl shadow-xl space-y-4 mb-8">
+                            <p class="font-bold text-xl text-white/90 border-b border-glass-border pb-3">A. Görünüm ve Kayıt Araçları</p>
+                            
+                            <button id="toggle-glass" class="w-full bg-gray-700/50 hover:bg-gray-600/70 text-white font-bold py-3 px-4 rounded-xl transition duration-150 shadow-md border border-glass-border/50">
+                                Cam Kapağını Kaldır
+                            </button>
+                            
+                            <button id="toggle-effect" class="w-full bg-gray-700/50 hover:bg-gray-600/70 text-white font-bold py-3 px-4 rounded-xl transition duration-150 shadow-md border border-glass-border/50">
+                                Efektleri Kapat (Neon Kapalı)
+                            </button>
+                            
+                            <div class="flex space-x-4 pt-3">
+                                <button id="save-design" class="w-1/2 bg-green-500/90 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-xl transition duration-150 shadow-lg transform hover:scale-[1.02]">
+                                Kaydet
+                                </button>
+                                <button id="load-design" class="w-1/2 bg-yellow-400/90 hover:bg-yellow-500 text-gray-900 font-bold py-3 px-4 rounded-xl transition duration-150 shadow-lg transform hover:scale-[1.02]">
+                                    Yükle
+                                </button>
+                            </div>
+                        </div>
+
+
                         <div class="glass-module p-5 rounded-xl shadow-xl mb-8">
-                            <label class="block text-xl font-bold text-white/90 border-b border-glass-border pb-3 mb-4">A. Neon Rengi Seçin</label>
+                            <label class="block text-xl font-bold text-white/90 border-b border-glass-border pb-3 mb-4">B. Neon Rengini Seçin</label>
                             <div id="color-picker" class="flex gap-4 p-2 flex-wrap justify-center sm:justify-start">
                                 </div>
                         </div>
                         
                         <div class="space-y-4 mb-8">
                             <button id="toggle-shapes" class="w-full bg-primary-apple/90 hover:bg-primary-apple text-white font-bold py-4 px-4 rounded-xl transition duration-200 flex justify-between items-center shadow-lg transform hover:scale-[1.01] text-xl">
-                                <span class="text-xl font-semibold">B. Şekil Kütüphanesi</span>
+                                <span class="text-xl font-semibold">C. Şekil Kütüphanesi</span>
                                 <svg id="shapes-arrow" class="w-6 h-6 transform transition-transform duration-300 rotate-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                             </button>
                             
@@ -1243,7 +1245,7 @@ Lütfen en kısa zamanda benimle iletişime geçin. (Tasarım ID: ${userId})`;
                         </div>
 
                         <div id="selected-element-info" class="glass-module p-5 rounded-xl shadow-xl border border-neon-accent/60 hidden mb-8">
-                            <p class="font-bold text-2xl text-neon-accent mb-4 border-b border-glass-border pb-3">C. Seçili Öğeyi Düzenle</p>
+                            <p class="font-bold text-2xl text-neon-accent mb-4 border-b border-glass-border pb-3">D. Seçili Öğeyi Düzenle</p>
                             
                             <div class="mb-5">
                                 <label for="control-pos-x" class="block text-sm font-medium mb-3 text-gray-300 flex justify-between items-end">
@@ -1274,17 +1276,6 @@ Lütfen en kısa zamanda benimle iletişime geçin. (Tasarım ID: ${userId})`;
                             </button>
                         </div>
                         
-                        <div class="glass-module p-5 rounded-xl shadow-xl space-y-4 mb-8">
-                            <p class="font-bold text-xl text-white/90 border-b border-glass-border pb-3">D. Görünüm Araçları</p>
-                            
-                            <button id="toggle-glass" class="w-full bg-gray-700/50 hover:bg-gray-600/70 text-white font-bold py-3 px-4 rounded-xl transition duration-150 shadow-md border border-glass-border/50">
-                                Cam Kapağını Kaldır
-                            </button>
-                            
-                            <button id="toggle-effect" class="w-full bg-gray-700/50 hover:bg-gray-600/70 text-white font-bold py-3 px-4 rounded-xl transition duration-150 shadow-md border border-glass-border/50">
-                                Efektleri Kapat (Neon Kapalı)
-                            </button>
-                        </div>
                         
                         <button id="next-step-2" class="next-button w-full bg-primary-apple/90 hover:bg-primary-apple text-white font-bold py-4 px-4 rounded-xl transition duration-200 shadow-lg transform hover:scale-[1.01] text-xl mt-4">
                             Tasarımı Bitir ve Özete Geç &rarr;
@@ -1302,13 +1293,13 @@ Lütfen en kısa zamanda benimle iletişime geçin. (Tasarım ID: ${userId})`;
                             </div>
                         
                         <div class="glass-module p-5 rounded-xl shadow-xl space-y-4 mb-8">
-                            <p class="font-bold text-xl text-white/90 border-b border-glass-border pb-3">Tasarım Kaydet/Yükle</p>
+                            <p class="font-bold text-xl text-white/90 border-b border-glass-border pb-3">Son Kaydetme</p>
                             <div class="flex space-x-4 pt-3">
                                 <button id="save-design" class="w-1/2 bg-green-500/90 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-xl transition duration-150 shadow-lg transform hover:scale-[1.02]">
-                                Kaydet
+                                Tekrar Kaydet
                                 </button>
                                 <button id="load-design" class="w-1/2 bg-yellow-400/90 hover:bg-yellow-500 text-gray-900 font-bold py-3 px-4 rounded-xl transition duration-150 shadow-lg transform hover:scale-[1.02]">
-                                    Yükle
+                                    Tasarımı Yükle
                                 </button>
                             </div>
                         </div>
