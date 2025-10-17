@@ -15,6 +15,7 @@ A full-featured 3D neon tabletop designer built with React, Vite, Tailwind CSS, 
 
 ## 🧱 Project Structure
 ```
+index.html         # Root entry served by Vite (Option 2)
 src/
   components/
     auth/          # Authentication modal and gate
@@ -30,6 +31,66 @@ src/
   types/           # Shared TypeScript types
   utils/           # Helper utilities (nanoid, exporters)
 ```
+
+## ⚙️ Vite entry configuration options
+The original scaffold placed `index.html` inside `src/`, which caused `npm run dev` to serve a 404. Vite looks for the HTML entry
+at the configured project root, so you can resolve the issue in either of the following ways:
+
+### Option 1 — keep `index.html` in `src/`
+- Move `index.html` back into the `src` folder.
+- Update `vite.config.ts` to point the dev server and build to that folder:
+
+```ts
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import { resolve } from 'node:path';
+
+export default defineConfig({
+  root: resolve(__dirname, 'src'),
+  plugins: [react()],
+  resolve: {
+    alias: {
+      '@': resolve(__dirname, 'src')
+    }
+  },
+  build: {
+    outDir: resolve(__dirname, 'dist'),
+    emptyOutDir: true
+  },
+  optimizeDeps: {
+    include: ['three/examples/jsm/loaders/GLTFLoader']
+  }
+});
+```
+
+### Option 2 — move `index.html` to the project root *(current setup)*
+- Place `index.html` at the repository root (as shown in the tree above).
+- Use this `vite.config.ts` which preserves the standard root while keeping useful aliases and build outputs:
+
+```ts
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import { resolve } from 'node:path';
+
+export default defineConfig({
+  root: '.',
+  plugins: [react()],
+  resolve: {
+    alias: {
+      '@': resolve(__dirname, 'src')
+    }
+  },
+  build: {
+    outDir: 'dist',
+    emptyOutDir: true
+  },
+  optimizeDeps: {
+    include: ['three/examples/jsm/loaders/GLTFLoader']
+  }
+});
+```
+
+Either approach ensures `npm run dev` serves the designer at `http://localhost:5173` without a 404.
 
 ## 🚀 Getting Started
 1. **Install dependencies**
