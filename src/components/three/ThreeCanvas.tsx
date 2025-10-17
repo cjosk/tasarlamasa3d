@@ -7,6 +7,7 @@ import { useDesignStore, selectCurrentDesign } from '../../state/designStore';
 import { GlassSurface } from './layers/GlassSurface';
 import { TableSurface } from './layers/TableSurface';
 import { useDesignContext } from '../../providers/DesignProvider';
+import { TABLE_GROUND_Y } from './layers/tableDimensions';
 
 export const ThreeCanvas = () => {
   const { canvasRef } = useDesignContext();
@@ -28,17 +29,25 @@ export const ThreeCanvas = () => {
     <div ref={canvasRef} className="relative h-full w-full">
       <Canvas
         shadows
-        camera={{ position: [6, 6, 6], fov: 45, near: 0.1, far: 100 }}
+        camera={{ position: [4.6, 4.2, 5], fov: 42, near: 0.1, far: 60 }}
         gl={{ alpha: true, antialias: true, preserveDrawingBuffer: true }}
       >
         <color attach="background" args={[0.05, 0.08, 0.16]} />
-        <ambientLight intensity={0.4} />
+        <ambientLight intensity={0.35} />
+        <hemisphereLight args={[0x4f83ff, 0x08090a, 0.45]} />
         <directionalLight
-          position={[6, 10, 4]}
-          intensity={0.6}
+          position={[6, 8, 5]}
+          intensity={0.65}
           castShadow
           shadow-mapSize-width={2048}
           shadow-mapSize-height={2048}
+        />
+        <spotLight
+          position={[-3, 7, -4]}
+          angle={Math.PI / 6}
+          intensity={1}
+          penumbra={0.4}
+          castShadow
         />
         <Suspense
           fallback={
@@ -56,7 +65,13 @@ export const ThreeCanvas = () => {
               <NeonShapeMesh key={shape.id} shape={shape} transformMode={transformMode} />
             ))}
           </group>
-          <ContactShadows position={[0, -0.001, 0]} opacity={0.5} scale={10} blur={2} far={10} />
+          <ContactShadows
+            position={[0, TABLE_GROUND_Y - 0.02, 0]}
+            opacity={0.55}
+            scale={12}
+            blur={2.8}
+            far={10}
+          />
           <Environment preset="city" />
           <OrbitControls
             enablePan={false}
