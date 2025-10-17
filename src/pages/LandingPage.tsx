@@ -45,7 +45,7 @@ export const LandingPage = () => (
             <FeatureCard
               icon={<PenSquare className="h-5 w-5" />}
               title="Freeform layouts"
-              description="Drop lines, rings, text, or custom SVG neon art with instant feedback."
+              description="Drop V-strokes, peaks, zigzags, text, or custom SVG neon art with instant feedback."
             />
             <FeatureCard
               icon={<Zap className="h-5 w-5" />}

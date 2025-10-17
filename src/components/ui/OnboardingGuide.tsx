@@ -4,7 +4,7 @@ import { Sparkles } from 'lucide-react';
 const steps = [
   {
     title: 'Add a neon shape',
-    description: 'Use the toolbar to drop a line, circle, text, or your custom SVG.'
+    description: 'Use the toolbar to drop a V-stroke, peak, zigzag, text, or your custom SVG.'
   },
   {
     title: 'Tune the color',

@@ -1,7 +1,7 @@
 import type { Vector3Tuple } from 'three';
 import type { TableSizeId } from '../components/three/layers/tableDimensions';
 
-export type ShapeKind = 'line' | 'circle' | 'text' | 'svg';
+export type ShapeKind = 'v_shape' | 'single_peak' | 'zigzag_m' | 'text' | 'svg';
 
 export interface NeonShape {
   id: string;

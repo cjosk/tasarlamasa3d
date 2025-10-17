@@ -1,16 +1,20 @@
-import { Trash2, Sparkles, Type, Minus, Upload } from 'lucide-react';
+import { Activity, ChevronDown, Mountain, Trash2, Type, Upload } from 'lucide-react';
 import { useDesignStore } from '../../state/designStore';
 
 const iconForKind = (kind: string) => {
   switch (kind) {
-    case 'circle':
-      return <Sparkles className="h-4 w-4" />;
+    case 'v_shape':
+      return <ChevronDown className="h-4 w-4" />;
+    case 'single_peak':
+      return <Mountain className="h-4 w-4" />;
+    case 'zigzag_m':
+      return <Activity className="h-4 w-4" />;
     case 'text':
       return <Type className="h-4 w-4" />;
     case 'svg':
       return <Upload className="h-4 w-4" />;
     default:
-      return <Minus className="h-4 w-4" />;
+      return <ChevronDown className="h-4 w-4" />;
   }
 };
 

@@ -79,11 +79,19 @@ const pushHistory = (state: DesignStoreState['history'], next: DesignStateData) 
   state.future = [];
 };
 
+const LABEL_PRESETS: Record<ShapeKind, string> = {
+  v_shape: 'V Stroke',
+  single_peak: 'Peak',
+  zigzag_m: 'Zigzag',
+  text: 'Neon Text',
+  svg: 'Imported SVG'
+};
+
 const createShape = (kind: ShapeKind, payload?: Partial<NeonShape>): NeonShape => {
   const base: NeonShape = {
     id: nanoid(),
     kind,
-    label: `${kind.toUpperCase()}-${Math.floor(Math.random() * 1000)}`,
+    label: `${LABEL_PRESETS[kind]} #${Math.floor(Math.random() * 900 + 100)}`,
     color: '#22d3ee',
     intensity: 2.4,
     thickness: 0.2,
@@ -93,14 +101,6 @@ const createShape = (kind: ShapeKind, payload?: Partial<NeonShape>): NeonShape =
     scale: [1, 1, 1],
     animated: true
   };
-
-  if (kind === 'circle') {
-    base.scale = [1.5, 1.5, 1.5];
-  }
-
-  if (kind === 'line') {
-    base.scale = [2, 1, 1];
-  }
 
   return { ...base, ...payload };
 };

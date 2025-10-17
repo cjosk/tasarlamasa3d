@@ -1,16 +1,17 @@
 import {
+  Activity,
+  Box,
+  ChevronDown,
   Move3D,
+  Mountain,
+  PenSquare,
   Redo2,
   RefreshCcw,
   Save,
-  Shapes,
   SquareMousePointer,
   Type,
   Undo2,
-  Upload,
-  PenSquare,
-  Sparkles,
-  Box
+  Upload
 } from 'lucide-react';
 import { ChangeEvent } from 'react';
 import { useDesignStore } from '../../state/designStore';
@@ -81,18 +82,25 @@ export const Toolbar = () => {
     <div className="flex flex-wrap items-center gap-3 rounded-3xl border border-slate-800/70 bg-slate-900/70 p-3 text-xs shadow-panel backdrop-blur">
       <div className="flex items-center gap-2">
         <button
-          onClick={() => handleAddShape('line')}
+          onClick={() => handleAddShape('v_shape')}
           className="flex items-center gap-2 rounded-2xl border border-slate-700/80 px-4 py-2 font-semibold uppercase tracking-wide text-slate-200 transition hover:border-neon-blue/80 hover:text-white"
         >
-          <Shapes className="h-4 w-4" />
-          Line
+          <ChevronDown className="h-4 w-4" />
+          V Shape
         </button>
         <button
-          onClick={() => handleAddShape('circle')}
+          onClick={() => handleAddShape('single_peak')}
           className="flex items-center gap-2 rounded-2xl border border-slate-700/80 px-4 py-2 font-semibold uppercase tracking-wide text-slate-200 transition hover:border-neon-blue/80 hover:text-white"
         >
-          <Sparkles className="h-4 w-4" />
-          Circle
+          <Mountain className="h-4 w-4" />
+          Peak
+        </button>
+        <button
+          onClick={() => handleAddShape('zigzag_m')}
+          className="flex items-center gap-2 rounded-2xl border border-slate-700/80 px-4 py-2 font-semibold uppercase tracking-wide text-slate-200 transition hover:border-neon-blue/80 hover:text-white"
+        >
+          <Activity className="h-4 w-4" />
+          Zigzag
         </button>
         <button
           onClick={() => handleAddShape('text')}

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Group, MeshStandardMaterial, Vector3Tuple } from 'three';
+import { CatmullRomCurve3, Group, MeshStandardMaterial, Vector3, Vector3Tuple } from 'three';
 import { TransformControls, Text } from '@react-three/drei';
 import { NeonShape } from '../../types/design';
 import { useDesignStore } from '../../state/designStore';
@@ -28,6 +28,51 @@ const vectorTuple = (vector: { x: number; y: number; z: number }): Vector3Tuple 
   vector.z
 ];
 
+const MAX_NEON_HEIGHT = 0.72;
+
+const createCurveForKind = (kind: NeonShape['kind']) => {
+  switch (kind) {
+    case 'v_shape': {
+      const length = MAX_NEON_HEIGHT * 0.7;
+      const width = 0.4;
+      const points = [
+        new Vector3(-width / 2, length / 2, 0),
+        new Vector3(0, -length / 2 + 0.05, 0),
+        new Vector3(width / 2, length / 3, 0)
+      ];
+      const curve = new CatmullRomCurve3(points, false, 'chordal');
+      return { curve, tubularSegments: 48 } as const;
+    }
+    case 'single_peak': {
+      const length = MAX_NEON_HEIGHT * 0.9;
+      const width = 0.4;
+      const points = [
+        new Vector3(-width / 2, -length / 2, 0),
+        new Vector3(0, length / 2, 0),
+        new Vector3(width / 2, -length / 2, 0)
+      ];
+      const curve = new CatmullRomCurve3(points, false, 'chordal');
+      return { curve, tubularSegments: 48 } as const;
+    }
+    case 'zigzag_m': {
+      const length = MAX_NEON_HEIGHT * 0.9;
+      const width = 0.5;
+      const points = [
+        new Vector3(-width, -length / 2, 0),
+        new Vector3(-width / 2, length / 2, 0),
+        new Vector3(0, -length / 2 + 0.05, 0),
+        new Vector3(width / 2, length / 2, 0),
+        new Vector3(width, -length / 2, 0)
+      ];
+      const curve = new CatmullRomCurve3(points, false, 'chordal');
+      curve.tension = 0.4;
+      return { curve, tubularSegments: 64 } as const;
+    }
+    default:
+      return undefined;
+  }
+};
+
 export const NeonShapeMesh = ({ shape, transformMode }: NeonShapeMeshProps) => {
   const group = useRef<Group>(null);
   const [target, setTarget] = useState<Group | null>(null);
@@ -54,6 +99,9 @@ export const NeonShapeMesh = ({ shape, transformMode }: NeonShapeMeshProps) => {
     return () => material.dispose();
   }, [material]);
 
+  const neonCurve = useMemo(() => createCurveForKind(shape.kind), [shape.kind]);
+  const neonRadius = useMemo(() => Math.max(shape.thickness / 4, 0.01), [shape.thickness]);
+
   useFrame(({ clock }) => {
     if (!material) return;
     const base = shape.intensity;
@@ -77,18 +125,19 @@ export const NeonShapeMesh = ({ shape, transformMode }: NeonShapeMeshProps) => {
 
   const renderGeometry = () => {
     switch (shape.kind) {
-      case 'line':
+      case 'v_shape':
+      case 'single_peak':
+      case 'zigzag_m':
+        if (!material || !neonCurve) {
+          return null;
+        }
         return (
-          <mesh castShadow receiveShadow>
-            <cylinderGeometry args={[shape.thickness / 4, shape.thickness / 4, 2, 32]} />
-            {material && <primitive object={material} attach="material" />}
-          </mesh>
-        );
-      case 'circle':
-        return (
-          <mesh castShadow receiveShadow>
-            <torusGeometry args={[1, shape.thickness / 3, 16, 100]} />
-            {material && <primitive object={material} attach="material" />}
+          <mesh castShadow receiveShadow rotation={[-Math.PI / 2, 0, 0]}>
+            <tubeGeometry
+              key={`${shape.kind}-${shape.thickness.toFixed(3)}`}
+              args={[neonCurve.curve, neonCurve.tubularSegments, neonRadius, 18, false]}
+            />
+            <primitive object={material} attach="material" />
           </mesh>
         );
       case 'text':
