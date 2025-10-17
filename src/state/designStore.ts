@@ -1,7 +1,14 @@
 import { create } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
 import { nanoid } from '../utils/nanoid';
+import type { Vector3Tuple } from 'three';
 import { DesignStateData, GlassSettings, NeonShape, ShapeKind } from '../types/design';
+import {
+  DEFAULT_TABLE_SIZE_ID,
+  getTableHeights,
+  getTableProfile
+} from '../components/three/layers/tableDimensions';
+import type { TableSizeId } from '../components/three/layers/tableDimensions';
 
 interface DesignStoreState {
   history: {
@@ -14,6 +21,7 @@ interface DesignStoreState {
   transformMode: 'translate' | 'rotate' | 'scale';
   loading: boolean;
   error?: string;
+  setTableSize: (sizeId: TableSizeId) => void;
   addShape: (kind: ShapeKind, payload?: Partial<NeonShape>) => void;
   updateShape: (id: string, patch: Partial<NeonShape>) => void;
   removeShape: (id: string) => void;
@@ -46,6 +54,7 @@ const defaultDesign = (): DesignStateData => ({
     roughness: 0.1,
     thickness: 0.6
   },
+  tableSizeId: DEFAULT_TABLE_SIZE_ID,
   performance: 'high'
 });
 
@@ -100,12 +109,46 @@ export const useDesignStore = create<DesignStoreState>()(
     transformMode: 'translate',
     loading: false,
     error: undefined,
+    setTableSize: (sizeId) =>
+      set((state) => {
+        if (state.history.present.tableSizeId === sizeId) {
+          return;
+        }
+        const currentProfile = getTableProfile(state.history.present.tableSizeId);
+        const nextProfile = getTableProfile(sizeId);
+        const currentHeights = getTableHeights(currentProfile);
+        const nextHeights = getTableHeights(nextProfile);
+        const deltaY = nextHeights.neonSurfaceY - currentHeights.neonSurfaceY;
+
+        const nextShapes = state.history.present.shapes.map((shape) => ({
+          ...shape,
+          position: [
+            shape.position[0],
+            shape.position[1] + deltaY,
+            shape.position[2]
+          ] as Vector3Tuple
+        }));
+
+        const next: DesignStateData = {
+          ...state.history.present,
+          shapes: nextShapes,
+          tableSizeId: sizeId
+        };
+
+        pushHistory(state.history, next);
+      }),
     addShape: (kind, payload) =>
       set((state) => {
         const shape = createShape(kind, payload);
+        const profile = getTableProfile(state.history.present.tableSizeId);
+        const heights = getTableHeights(profile);
+        const positionedShape: NeonShape = {
+          ...shape,
+          position: [shape.position[0], heights.neonSurfaceY, shape.position[2]] as Vector3Tuple
+        };
         const next: DesignStateData = {
           ...state.history.present,
-          shapes: [...state.history.present.shapes, shape],
+          shapes: [...state.history.present.shapes, positionedShape],
           selectedId: shape.id
         };
         pushHistory(state.history, next);
@@ -181,9 +224,25 @@ export const useDesignStore = create<DesignStoreState>()(
       }),
     loadDesign: (data) =>
       set((state) => {
+        const profile = getTableProfile(data.tableSizeId);
+        const heights = getTableHeights(profile);
+        const normalized: DesignStateData = {
+          ...defaultDesign(),
+          ...clone(data),
+          tableSizeId: data.tableSizeId ?? DEFAULT_TABLE_SIZE_ID,
+          shapes: (data.shapes ?? []).map((shape) => ({
+            ...shape,
+            position: [
+              shape.position?.[0] ?? 0,
+              shape.position?.[1] ?? heights.neonSurfaceY,
+              shape.position?.[2] ?? 0
+            ] as Vector3Tuple
+          }))
+        };
+        state.performance = normalized.performance;
         state.history = {
           past: [],
-          present: clone(data),
+          present: normalized,
           future: []
         };
       }),
@@ -222,3 +281,7 @@ export const useDesignStore = create<DesignStoreState>()(
 );
 
 export const selectCurrentDesign = (state: DesignStoreState) => state.history.present;
+export const selectTableProfile = (state: DesignStoreState) =>
+  getTableProfile(state.history.present.tableSizeId);
+export const selectTableHeights = (state: DesignStoreState) =>
+  getTableHeights(getTableProfile(state.history.present.tableSizeId));

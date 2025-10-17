@@ -1,4 +1,5 @@
-import { Vector3Tuple } from 'three';
+import type { Vector3Tuple } from 'three';
+import type { TableSizeId } from '../components/three/layers/tableDimensions';
 
 export type ShapeKind = 'line' | 'circle' | 'text' | 'svg';
 
@@ -39,6 +40,7 @@ export interface DesignStateData {
   selectedId?: string;
   glass: GlassSettings;
   performance: 'high' | 'eco';
+  tableSizeId?: TableSizeId;
   createdAt?: string;
   updatedAt?: string;
 }

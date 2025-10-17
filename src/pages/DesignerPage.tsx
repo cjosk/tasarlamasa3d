@@ -13,6 +13,7 @@ import { useDesignStore } from '../state/designStore';
 import { useSearchParams } from 'react-router-dom';
 import { useFirebase } from '../providers/FirebaseProvider';
 import clsx from 'clsx';
+import { TableSizePanel } from '../components/panels/TableSizePanel';
 
 export const DesignerPage = () => {
   const [searchParams] = useSearchParams();
@@ -60,6 +61,7 @@ export const DesignerPage = () => {
           <OnboardingGuide />
         </div>
         <div className="hidden gap-4 lg:flex lg:flex-col">
+          <TableSizePanel />
           <InspectorPanel />
           <GlassControlPanel />
           <PreviewToggle />
@@ -67,6 +69,7 @@ export const DesignerPage = () => {
       </div>
       <div className="space-y-4 px-4 pb-28 lg:hidden">
         <ShapePanel />
+        <TableSizePanel />
         <InspectorPanel />
         <GlassControlPanel />
         <PreviewToggle />

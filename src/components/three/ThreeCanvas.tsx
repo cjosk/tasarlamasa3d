@@ -3,17 +3,23 @@ import { OrbitControls, Environment, ContactShadows, Html } from '@react-three/d
 import { Suspense, useMemo } from 'react';
 import { EffectComposer, Bloom } from '@react-three/postprocessing';
 import { NeonShapeMesh } from './NeonShapeMesh';
-import { useDesignStore, selectCurrentDesign } from '../../state/designStore';
+import {
+  useDesignStore,
+  selectCurrentDesign,
+  selectTableHeights,
+  selectTableProfile
+} from '../../state/designStore';
 import { GlassSurface } from './layers/GlassSurface';
 import { TableSurface } from './layers/TableSurface';
 import { useDesignContext } from '../../providers/DesignProvider';
-import { TABLE_GROUND_Y } from './layers/tableDimensions';
 
 export const ThreeCanvas = () => {
   const { canvasRef } = useDesignContext();
   const design = useDesignStore(selectCurrentDesign);
   const performance = useDesignStore((state) => state.performance);
   const transformMode = useDesignStore((state) => state.transformMode);
+  const tableHeights = useDesignStore(selectTableHeights);
+  const tableProfile = useDesignStore(selectTableProfile);
   const shapes = design.shapes;
 
   const bloomConfig = useMemo(
@@ -66,9 +72,9 @@ export const ThreeCanvas = () => {
             ))}
           </group>
           <ContactShadows
-            position={[0, TABLE_GROUND_Y - 0.02, 0]}
+            position={[0, tableHeights.groundY - 0.02, 0]}
             opacity={0.55}
-            scale={12}
+            scale={Math.max(tableProfile.width, tableProfile.depth) * 6}
             blur={2.8}
             far={10}
           />

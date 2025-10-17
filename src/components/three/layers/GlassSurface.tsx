@@ -1,27 +1,46 @@
 import { GlassSettings } from '../../../types/design';
-import { TABLE_DIMENSIONS } from './tableDimensions';
+import {
+  selectTableHeights,
+  selectTableProfile,
+  useDesignStore
+} from '../../../state/designStore';
 
 interface GlassSurfaceProps {
   glass: GlassSettings;
 }
 
-const { width, depth, glassWallThickness } = TABLE_DIMENSIONS;
-
 export const GlassSurface = ({ glass }: GlassSurfaceProps) => {
-  const height = Math.max(glass.thickness, 0.2);
-  const wall = glassWallThickness;
-  const topThickness = wall * 1.2;
-  const enclosureY = height / 2;
-  const postHeight = Math.max(height - topThickness * 1.2, 0.24);
-  const postInsetX = width / 2 - 0.28;
-  const postInsetZ = depth / 2 - 0.2;
-  const postRadius = 0.035;
+  const profile = useDesignStore(selectTableProfile);
+  const heights = useDesignStore(selectTableHeights);
+
+  const wall = profile.glassWallThickness;
+  const enclosureHeight = Math.max(heights.glassHeight, 0.12);
+  const topThickness = Math.max(0.008, 0.006 + glass.thickness * 0.004);
+  const wallHeight = Math.max(enclosureHeight - topThickness, 0.1);
+  const baseLipHeight = wall * 0.75;
 
   return (
-    <group position={[0, enclosureY, 0]} name="NeonTable_Glass">
+    <group position={[0, heights.glassBaseY, 0]} name="NeonTable_Glass">
+      {/* Smoked glass base lip */}
+      <mesh position={[0, baseLipHeight / 2, 0]} castShadow receiveShadow>
+        <boxGeometry args={[profile.width + wall * 2.4, baseLipHeight, profile.depth + wall * 2.4]} />
+        <meshPhysicalMaterial
+          color={glass.tint}
+          transparent
+          opacity={Math.min(glass.opacity + 0.1, 0.85)}
+          roughness={glass.roughness * 0.5}
+          metalness={0.2}
+          reflectivity={0.9}
+          transmission={0.65}
+          clearcoat={0.6}
+          clearcoatRoughness={0.18}
+          thickness={0.4}
+        />
+      </mesh>
+
       {/* Longitudinal walls */}
-      <mesh position={[0, 0, depth / 2 + wall / 2]} castShadow>
-        <boxGeometry args={[width + wall * 2, height, wall]} />
+      <mesh position={[0, wallHeight / 2 + baseLipHeight, profile.depth / 2 + wall / 2]} castShadow>
+        <boxGeometry args={[profile.width + wall * 2, wallHeight, wall]} />
         <meshPhysicalMaterial
           color={glass.tint}
           transparent
@@ -29,14 +48,14 @@ export const GlassSurface = ({ glass }: GlassSurfaceProps) => {
           roughness={glass.roughness * 0.6}
           metalness={0.15}
           reflectivity={0.85}
-          transmission={0.98}
-          clearcoat={0.8}
-          clearcoatRoughness={0.18}
+          transmission={0.94}
+          clearcoat={0.85}
+          clearcoatRoughness={0.16}
           thickness={0.6}
         />
       </mesh>
-      <mesh position={[0, 0, -(depth / 2 + wall / 2)]} castShadow>
-        <boxGeometry args={[width + wall * 2, height, wall]} />
+      <mesh position={[0, wallHeight / 2 + baseLipHeight, -(profile.depth / 2 + wall / 2)]} castShadow>
+        <boxGeometry args={[profile.width + wall * 2, wallHeight, wall]} />
         <meshPhysicalMaterial
           color={glass.tint}
           transparent
@@ -44,16 +63,16 @@ export const GlassSurface = ({ glass }: GlassSurfaceProps) => {
           roughness={glass.roughness * 0.6}
           metalness={0.15}
           reflectivity={0.85}
-          transmission={0.98}
-          clearcoat={0.8}
-          clearcoatRoughness={0.18}
+          transmission={0.94}
+          clearcoat={0.85}
+          clearcoatRoughness={0.16}
           thickness={0.6}
         />
       </mesh>
 
       {/* Lateral walls */}
-      <mesh position={[width / 2 + wall / 2, 0, 0]} castShadow>
-        <boxGeometry args={[wall, height, depth + wall * 2]} />
+      <mesh position={[profile.width / 2 + wall / 2, wallHeight / 2 + baseLipHeight, 0]} castShadow>
+        <boxGeometry args={[wall, wallHeight, profile.depth + wall * 2]} />
         <meshPhysicalMaterial
           color={glass.tint}
           transparent
@@ -61,14 +80,14 @@ export const GlassSurface = ({ glass }: GlassSurfaceProps) => {
           roughness={glass.roughness * 0.6}
           metalness={0.15}
           reflectivity={0.85}
-          transmission={0.98}
-          clearcoat={0.8}
-          clearcoatRoughness={0.18}
+          transmission={0.94}
+          clearcoat={0.85}
+          clearcoatRoughness={0.16}
           thickness={0.6}
         />
       </mesh>
-      <mesh position={[-(width / 2 + wall / 2), 0, 0]} castShadow>
-        <boxGeometry args={[wall, height, depth + wall * 2]} />
+      <mesh position={[-(profile.width / 2 + wall / 2), wallHeight / 2 + baseLipHeight, 0]} castShadow>
+        <boxGeometry args={[wall, wallHeight, profile.depth + wall * 2]} />
         <meshPhysicalMaterial
           color={glass.tint}
           transparent
@@ -76,45 +95,29 @@ export const GlassSurface = ({ glass }: GlassSurfaceProps) => {
           roughness={glass.roughness * 0.6}
           metalness={0.15}
           reflectivity={0.85}
-          transmission={0.98}
-          clearcoat={0.8}
-          clearcoatRoughness={0.18}
+          transmission={0.94}
+          clearcoat={0.85}
+          clearcoatRoughness={0.16}
           thickness={0.6}
         />
       </mesh>
 
       {/* Tinted top cover */}
-      <mesh position={[0, height / 2 + topThickness / 2, 0]} receiveShadow>
-        <boxGeometry args={[width + wall * 2, topThickness, depth + wall * 2]} />
+      <mesh position={[0, wallHeight + baseLipHeight + topThickness / 2, 0]} receiveShadow>
+        <boxGeometry args={[profile.width + wall * 2, topThickness, profile.depth + wall * 2]} />
         <meshPhysicalMaterial
           color={glass.tint}
           transparent
-          opacity={Math.min(glass.opacity + 0.1, 0.92)}
+          opacity={Math.min(glass.opacity + 0.2, 0.92)}
           roughness={glass.roughness * 0.4}
           metalness={0.25}
           reflectivity={0.95}
-          transmission={0.92}
+          transmission={0.9}
           clearcoat={1}
           clearcoatRoughness={0.1}
-          thickness={0.8}
+          thickness={0.75}
         />
       </mesh>
-
-      {/* Slim supports to echo the reference neon table */}
-      {[1, -1].flatMap((dirX) =>
-        [1, -1].map((dirZ) => (
-          <mesh
-            key={`support-${dirX}-${dirZ}`}
-            position={[postInsetX * dirX, -height / 2 + postHeight / 2, postInsetZ * dirZ]}
-            castShadow
-            receiveShadow
-          >
-            <cylinderGeometry args={[postRadius, postRadius * 0.8, postHeight, 18]} />
-            <meshStandardMaterial color="#0b1729" metalness={0.3} roughness={0.55} />
-          </mesh>
-        ))
-      )}
-
     </group>
   );
 };
