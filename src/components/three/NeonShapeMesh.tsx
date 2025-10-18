@@ -5,7 +5,7 @@ import { NeonShape } from '../../types/design';
 import { useDesignStore } from '../../state/designStore';
 import { useFrame, useThree } from '@react-three/fiber';
 import { SVGLoader } from 'three/examples/jsm/loaders/SVGLoader.js';
-import { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
+import { OrbitControls as OrbitControlsImpl, TransformControls as TransformControlsClass } from 'three-stdlib';
 
 interface NeonShapeMeshProps {
   shape: NeonShape;
@@ -78,6 +78,7 @@ const createCurveForKind = (kind: NeonShape['kind']) => {
 export const NeonShapeMesh = ({ shape, transformMode, orbitControlsRef }: NeonShapeMeshProps) => {
   const group = useRef<Group | null>(null);
   const [attachedObject, setAttachedObject] = useState<Group | null>(null);
+  const transformRef = useRef<TransformControlsClass | null>(null);
   const selectShape = useDesignStore((state) => state.selectShape);
   const updateShape = useDesignStore((state) => state.updateShape);
   const setTransforming = useDesignStore((state) => state.setTransforming);
@@ -99,6 +100,52 @@ export const NeonShapeMesh = ({ shape, transformMode, orbitControlsRef }: NeonSh
       }
     };
   }, [isSelected, orbitControlsRef, setTransforming]);
+
+  useEffect(() => {
+    const controls = transformRef.current;
+    if (!controls) return;
+
+    const handleMouseDown = (event: { stopPropagation?: () => void }) => {
+      event.stopPropagation?.();
+      setTransforming(true);
+      if (orbitControlsRef.current) {
+        orbitControlsRef.current.enabled = false;
+      }
+    };
+
+    const handleMouseUp = (event: { stopPropagation?: () => void }) => {
+      event.stopPropagation?.();
+      setTransforming(false);
+      if (orbitControlsRef.current) {
+        orbitControlsRef.current.enabled = true;
+      }
+    };
+
+    const handleDraggingChanged = (event: { value: boolean }) => {
+      setTransforming(event.value);
+      if (orbitControlsRef.current) {
+        orbitControlsRef.current.enabled = !event.value;
+      }
+    };
+
+    controls.addEventListener('mouseDown', handleMouseDown);
+    controls.addEventListener('mouseUp', handleMouseUp);
+    controls.addEventListener('touchStart', handleMouseDown);
+    controls.addEventListener('touchEnd', handleMouseUp);
+    controls.addEventListener('dragging-changed', handleDraggingChanged);
+
+    return () => {
+      controls.removeEventListener('mouseDown', handleMouseDown);
+      controls.removeEventListener('mouseUp', handleMouseUp);
+      controls.removeEventListener('touchStart', handleMouseDown);
+      controls.removeEventListener('touchEnd', handleMouseUp);
+      controls.removeEventListener('dragging-changed', handleDraggingChanged);
+      if (orbitControlsRef.current) {
+        orbitControlsRef.current.enabled = true;
+      }
+      setTransforming(false);
+    };
+  }, [orbitControlsRef, setTransforming, isSelected, attachedObject]);
 
   useEffect(() => {
     if (!group.current) return;
@@ -205,34 +252,13 @@ export const NeonShapeMesh = ({ shape, transformMode, orbitControlsRef }: NeonSh
       </group>
       {isSelected && attachedObject && (
         <TransformControls
+          ref={(instance) => {
+            transformRef.current = instance;
+          }}
           object={attachedObject}
           mode={transformMode}
           camera={camera}
           enabled
-          onPointerDown={() => {
-            setTransforming(true);
-            if (orbitControlsRef.current) {
-              orbitControlsRef.current.enabled = false;
-            }
-          }}
-          onPointerUp={() => {
-            setTransforming(false);
-            if (orbitControlsRef.current) {
-              orbitControlsRef.current.enabled = true;
-            }
-          }}
-          onPointerCancel={() => {
-            setTransforming(false);
-            if (orbitControlsRef.current) {
-              orbitControlsRef.current.enabled = true;
-            }
-          }}
-          onPointerMissed={() => {
-            setTransforming(false);
-            if (orbitControlsRef.current) {
-              orbitControlsRef.current.enabled = true;
-            }
-          }}
           onObjectChange={() => {
             if (!group.current) return;
             updateShape(shape.id, {
