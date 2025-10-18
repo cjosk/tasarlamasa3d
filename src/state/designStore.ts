@@ -89,8 +89,34 @@ const LABEL_PRESETS: Record<ShapeKind, string> = {
   svg: 'Imported SVG'
 };
 
-const NEON_THICKNESS = 0.006;
-const STACK_SPACING = 0.35;
+const NEON_THICKNESS = 0.017;
+const STACK_SPACING = 0.08;
+const LIMIT_X = 0.5; // 50 cm expressed in meters
+const LIMIT_Y = 0.4; // 40 cm expressed in meters
+
+const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
+
+const constrainPosition = (position: Vector3Tuple, tableSizeId: TableSizeId): Vector3Tuple => {
+  const profile = getTableProfile(tableSizeId);
+  const heights = getTableHeights(profile);
+  const minY = heights.neonSurfaceY;
+  const maxY = heights.neonSurfaceY + LIMIT_Y;
+
+  return [
+    clamp(position[0], -LIMIT_X, LIMIT_X),
+    clamp(position[1], minY, maxY),
+    0
+  ] as Vector3Tuple;
+};
+
+const constrainRotation = (rotation: Vector3Tuple): Vector3Tuple => [0, rotation[1], 0];
+
+const sanitizeShape = (shape: NeonShape, tableSizeId: TableSizeId): NeonShape => ({
+  ...shape,
+  thickness: NEON_THICKNESS,
+  position: constrainPosition(shape.position, tableSizeId),
+  rotation: constrainRotation(shape.rotation)
+});
 
 const createShape = (kind: ShapeKind, payload?: Partial<NeonShape>): NeonShape => {
   const base: NeonShape = {
@@ -101,7 +127,7 @@ const createShape = (kind: ShapeKind, payload?: Partial<NeonShape>): NeonShape =
     intensity: 2.4,
     thickness: NEON_THICKNESS,
     glowRadius: 0.8,
-    position: [0, 0.02, 0],
+    position: [0, 0, 0],
     rotation: [0, 0, 0],
     scale: [1, 1, 1],
     animated: true
@@ -128,20 +154,20 @@ export const useDesignStore = create<DesignStoreState>()(
         if (state.history.present.tableSizeId === sizeId) {
           return;
         }
+
         const currentProfile = getTableProfile(state.history.present.tableSizeId);
         const nextProfile = getTableProfile(sizeId);
         const currentHeights = getTableHeights(currentProfile);
         const nextHeights = getTableHeights(nextProfile);
         const deltaY = nextHeights.neonSurfaceY - currentHeights.neonSurfaceY;
 
-        const nextShapes = state.history.present.shapes.map((shape) => ({
-          ...shape,
-          position: [
-            shape.position[0],
-            shape.position[1] + deltaY,
-            shape.position[2]
-          ] as Vector3Tuple
-        }));
+        const nextShapes = state.history.present.shapes.map((shape) => {
+          const adjusted: NeonShape = {
+            ...shape,
+            position: [shape.position[0], shape.position[1] + deltaY, 0] as Vector3Tuple
+          };
+          return sanitizeShape(adjusted, sizeId);
+        });
 
         const next: DesignStateData = {
           ...state.history.present,
@@ -157,12 +183,15 @@ export const useDesignStore = create<DesignStoreState>()(
         const profile = getTableProfile(state.history.present.tableSizeId);
         const heights = getTableHeights(profile);
         const nextIndex = state.history.present.shapes.length;
-        const stackedZ = -nextIndex * STACK_SPACING;
-        const positionedShape: NeonShape = {
-          ...shape,
-          thickness: NEON_THICKNESS,
-          position: [shape.position[0], heights.neonSurfaceY, stackedZ] as Vector3Tuple
-        };
+        const stackedYOffset = Math.min(nextIndex * STACK_SPACING, LIMIT_Y);
+        const rawPosition: Vector3Tuple = [shape.position[0], heights.neonSurfaceY + stackedYOffset, 0];
+        const positionedShape = sanitizeShape(
+          {
+            ...shape,
+            position: rawPosition
+          },
+          state.history.present.tableSizeId
+        );
         const next: DesignStateData = {
           ...state.history.present,
           shapes: [...state.history.present.shapes, positionedShape],
@@ -177,11 +206,14 @@ export const useDesignStore = create<DesignStoreState>()(
             return shape;
           }
           const { thickness: _ignoredThickness, ...restPatch } = patch;
-          return {
+          const patched: NeonShape = {
             ...shape,
             ...restPatch,
-            thickness: NEON_THICKNESS
+            thickness: NEON_THICKNESS,
+            position: (restPatch.position as Vector3Tuple | undefined) ?? shape.position,
+            rotation: (restPatch.rotation as Vector3Tuple | undefined) ?? shape.rotation
           };
+          return sanitizeShape(patched, state.history.present.tableSizeId);
         });
         const next: DesignStateData = {
           ...state.history.present,
@@ -257,15 +289,27 @@ export const useDesignStore = create<DesignStoreState>()(
           ...defaultDesign(),
           ...clone(data),
           tableSizeId: data.tableSizeId ?? DEFAULT_TABLE_SIZE_ID,
-          shapes: (data.shapes ?? []).map((shape, index) => ({
-            ...shape,
-            thickness: NEON_THICKNESS,
-            position: [
+          shapes: (data.shapes ?? []).map((shape, index) => {
+            const rawPosition: Vector3Tuple = [
               shape.position?.[0] ?? 0,
-              shape.position?.[1] ?? heights.neonSurfaceY,
-              shape.position?.[2] ?? -index * STACK_SPACING
-            ] as Vector3Tuple
-          }))
+              shape.position?.[1] ?? heights.neonSurfaceY + Math.min(index * STACK_SPACING, LIMIT_Y),
+              0
+            ];
+            const rawRotation: Vector3Tuple = [
+              shape.rotation?.[0] ?? 0,
+              shape.rotation?.[1] ?? 0,
+              shape.rotation?.[2] ?? 0
+            ];
+            return sanitizeShape(
+              {
+                ...shape,
+                thickness: NEON_THICKNESS,
+                position: rawPosition,
+                rotation: rawRotation
+              } as NeonShape,
+              data.tableSizeId ?? DEFAULT_TABLE_SIZE_ID
+            );
+          })
         };
         state.performance = normalized.performance;
         state.history = {
@@ -313,3 +357,4 @@ export const selectTableProfile = (state: DesignStoreState) =>
   getTableProfile(state.history.present.tableSizeId);
 export const selectTableHeights = (state: DesignStoreState) =>
   getTableHeights(getTableProfile(state.history.present.tableSizeId));
+export const movementLimits = { x: LIMIT_X, y: LIMIT_Y } as const;

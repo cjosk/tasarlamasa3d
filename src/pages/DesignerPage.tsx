@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Toolbar } from '../components/toolbar/Toolbar';
 import { ShapeDropdown } from '../components/toolbar/ShapeDropdown';
 import { ThreeCanvas } from '../components/three/ThreeCanvas';
@@ -7,13 +7,10 @@ import { InspectorPanel } from '../components/panels/InspectorPanel';
 import { GlassControlPanel } from '../components/panels/GlassControlPanel';
 import { PreviewToggle } from '../components/panels/PreviewToggle';
 import { OnboardingGuide } from '../components/ui/OnboardingGuide';
-import { SaveModal } from '../components/modals/SaveModal';
-import { ShareDialog } from '../components/modals/ShareDialog';
 import { useDesignContext } from '../providers/DesignProvider';
 import { useDesignStore } from '../state/designStore';
 import { useSearchParams } from 'react-router-dom';
 import { useFirebase } from '../providers/FirebaseProvider';
-import clsx from 'clsx';
 import { TableSizePanel } from '../components/panels/TableSizePanel';
 import { MobileControlPanel } from '../components/panels/MobileControlPanel';
 
@@ -24,8 +21,6 @@ export const DesignerPage = () => {
   const loading = useDesignStore((state) => state.loading);
   const error = useDesignStore((state) => state.error);
   const { authUser } = useFirebase();
-  const [saveOpen, setSaveOpen] = useState(false);
-  const [shareOpen, setShareOpen] = useState(false);
   const design = useDesignStore((state) => state.history.present);
 
   useEffect(() => {
@@ -34,19 +29,18 @@ export const DesignerPage = () => {
     }
   }, [designId, loadDesignById]);
 
-  const fabVisible = useMemo(() => design.shapes.length > 0, [design.shapes.length]);
-  const shareDisabled = !design.id;
+  const showStatus = useMemo(() => loading || Boolean(error), [error, loading]);
 
   return (
     <div className="relative flex h-[calc(100vh-5rem)] flex-col">
       <div className="relative z-30 px-4 pt-4">
         <Toolbar />
       </div>
-      {loading && (
-        <div className="px-4 text-sm text-slate-400">Syncing with Firebase…</div>
-      )}
-      {error && (
-        <div className="px-4 text-sm text-rose-400">{error}</div>
+      {showStatus && (
+        <div className="px-4 text-sm">
+          {loading && <span className="text-slate-400">Syncing with Firebase…</span>}
+          {error && <span className="text-rose-400">{error}</span>}
+        </div>
       )}
       <div className="grid flex-1 gap-4 px-4 pb-6 pt-4 lg:grid-cols-[280px_minmax(0,1fr)_280px]">
         <div className="hidden lg:block">
@@ -78,43 +72,6 @@ export const DesignerPage = () => {
       </div>
       <ShapeDropdown />
       <MobileControlPanel />
-      <div className="fixed inset-x-0 bottom-0 z-30 flex items-center justify-between gap-3 bg-slate-950/60 px-4 py-3 backdrop-blur lg:hidden">
-        <button
-          onClick={() => setSaveOpen(true)}
-          className="flex flex-1 items-center justify-center gap-2 rounded-full bg-neon-blue/80 px-4 py-3 text-sm font-semibold text-white"
-        >
-          Save
-        </button>
-        <button
-          onClick={() => setShareOpen(true)}
-          disabled={shareDisabled}
-          className="flex flex-1 items-center justify-center gap-2 rounded-full bg-neon-pink/80 px-4 py-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          Share
-        </button>
-      </div>
-      <div
-        className={clsx(
-          'pointer-events-auto fixed bottom-8 right-8 hidden flex-col gap-3 lg:flex',
-          fabVisible ? 'opacity-100' : 'pointer-events-none opacity-0'
-        )}
-      >
-        <button
-          onClick={() => setSaveOpen(true)}
-          className="rounded-full bg-neon-blue/80 px-6 py-3 text-sm font-semibold uppercase tracking-[0.3em] text-white shadow-lg shadow-neon-blue/40 hover:bg-neon-blue"
-        >
-          Save
-        </button>
-        <button
-          onClick={() => setShareOpen(true)}
-          disabled={shareDisabled}
-          className="rounded-full bg-neon-pink/80 px-6 py-3 text-sm font-semibold uppercase tracking-[0.3em] text-white shadow-lg shadow-neon-pink/40 hover:bg-neon-pink disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          Share
-        </button>
-      </div>
-      <SaveModal open={saveOpen} onClose={() => setSaveOpen(false)} />
-      <ShareDialog open={shareOpen} onClose={() => setShareOpen(false)} />
     </div>
   );
 };

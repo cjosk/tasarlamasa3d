@@ -2,7 +2,7 @@ import { MutableRefObject, useEffect, useMemo, useRef, useState } from 'react';
 import { CatmullRomCurve3, Group, MeshStandardMaterial, Vector3, Vector3Tuple } from 'three';
 import { TransformControls, Text } from '@react-three/drei';
 import { NeonShape } from '../../types/design';
-import { useDesignStore } from '../../state/designStore';
+import { useDesignStore, movementLimits, selectTableHeights } from '../../state/designStore';
 import { useFrame, useThree } from '@react-three/fiber';
 import { SVGLoader } from 'three/examples/jsm/loaders/SVGLoader.js';
 import { OrbitControls as OrbitControlsImpl, TransformControls as TransformControlsClass } from 'three-stdlib';
@@ -30,6 +30,16 @@ const vectorTuple = (vector: { x: number; y: number; z: number }): Vector3Tuple 
   vector.z
 ];
 
+const planarTuple = (vector: { x: number; y: number; z: number }): Vector3Tuple => [
+  vector.x,
+  vector.y,
+  0
+];
+
+const yawTuple = (rotation: { y: number }): Vector3Tuple => [0, rotation.y, 0];
+
+const clampValue = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
+
 const MAX_NEON_HEIGHT = 0.72;
 
 const createCurveForKind = (kind: NeonShape['kind']) => {
@@ -38,37 +48,37 @@ const createCurveForKind = (kind: NeonShape['kind']) => {
       const length = MAX_NEON_HEIGHT * 0.7;
       const width = 0.4;
       const points = [
-        new Vector3(-width / 2, length / 2, 0),
-        new Vector3(0, -length / 2 + 0.05, 0),
-        new Vector3(width / 2, length / 3, 0)
+        new Vector3(-width / 2, length, 0),
+        new Vector3(0, 0, 0),
+        new Vector3(width / 2, length * 0.7, 0)
       ];
       const curve = new CatmullRomCurve3(points, false, 'chordal');
-      return { curve, tubularSegments: 48 } as const;
+      return { curve, tubularSegments: 48, height: length } as const;
     }
     case 'single_peak': {
       const length = MAX_NEON_HEIGHT * 0.9;
       const width = 0.4;
       const points = [
-        new Vector3(-width / 2, -length / 2, 0),
-        new Vector3(0, length / 2, 0),
-        new Vector3(width / 2, -length / 2, 0)
+        new Vector3(-width / 2, 0, 0),
+        new Vector3(0, length, 0),
+        new Vector3(width / 2, 0, 0)
       ];
       const curve = new CatmullRomCurve3(points, false, 'chordal');
-      return { curve, tubularSegments: 48 } as const;
+      return { curve, tubularSegments: 48, height: length } as const;
     }
     case 'zigzag_m': {
       const length = MAX_NEON_HEIGHT * 0.9;
       const width = 0.5;
       const points = [
-        new Vector3(-width, -length / 2, 0),
-        new Vector3(-width / 2, length / 2, 0),
-        new Vector3(0, -length / 2 + 0.05, 0),
-        new Vector3(width / 2, length / 2, 0),
-        new Vector3(width, -length / 2, 0)
+        new Vector3(-width, 0, 0),
+        new Vector3(-width / 2, length, 0),
+        new Vector3(0, length * 0.1, 0),
+        new Vector3(width / 2, length, 0),
+        new Vector3(width, 0, 0)
       ];
       const curve = new CatmullRomCurve3(points, false, 'chordal');
       curve.tension = 0.4;
-      return { curve, tubularSegments: 64 } as const;
+      return { curve, tubularSegments: 64, height: length } as const;
     }
     default:
       return undefined;
@@ -86,8 +96,13 @@ export const NeonShapeMesh = ({ shape, transformMode, orbitControlsRef }: NeonSh
   const updateShape = useDesignStore((state) => state.updateShape);
   const setTransforming = useDesignStore((state) => state.setTransforming);
   const selectedId = useDesignStore((state) => state.history.present.selectedId);
+  const tableHeights = useDesignStore(selectTableHeights);
   const { camera } = useThree();
   const isSelected = selectedId === shape.id;
+  const limitX = movementLimits.x;
+  const limitY = movementLimits.y;
+  const minY = tableHeights.neonSurfaceY;
+  const maxY = minY + limitY;
 
   useEffect(() => {
     const controls = transformRef.current;
@@ -138,10 +153,15 @@ export const NeonShapeMesh = ({ shape, transformMode, orbitControlsRef }: NeonSh
 
   useEffect(() => {
     if (!group.current) return;
-    group.current.position.set(...shape.position);
-    group.current.rotation.set(...shape.rotation);
-    group.current.scale.set(...shape.scale);
-  }, [shape.position, shape.rotation, shape.scale]);
+    const [px, py] = shape.position;
+    group.current.position.set(
+      clampValue(px, -limitX, limitX),
+      clampValue(py, minY, maxY),
+      0
+    );
+    group.current.rotation.set(0, shape.rotation[1] ?? 0, 0);
+    group.current.scale.set(shape.scale[0], shape.scale[1], shape.scale[2]);
+  }, [shape.position, shape.rotation, shape.scale, limitX, minY, maxY]);
 
   const material = useMemo(
     () => (shape.kind === 'text' ? null : getColor(shape.color, shape.intensity)),
@@ -157,6 +177,27 @@ export const NeonShapeMesh = ({ shape, transformMode, orbitControlsRef }: NeonSh
   const neonRadius = useMemo(() => Math.max(shape.thickness / 2, 0.003), [shape.thickness]);
 
   useFrame(({ clock }) => {
+    if (group.current) {
+      const { position, rotation } = group.current;
+      const clampedX = clampValue(position.x, -limitX, limitX);
+      const clampedY = clampValue(position.y, minY, maxY);
+      if (Math.abs(position.x - clampedX) > 1e-4) {
+        position.x = clampedX;
+      }
+      if (Math.abs(position.y - clampedY) > 1e-4) {
+        position.y = clampedY;
+      }
+      if (Math.abs(position.z) > 1e-5) {
+        position.z = 0;
+      }
+      if (Math.abs(rotation.x) > 1e-4) {
+        rotation.x = 0;
+      }
+      if (Math.abs(rotation.z) > 1e-4) {
+        rotation.z = 0;
+      }
+    }
+
     if (pendingFocusRef.current && orbitControlsRef.current) {
       const controls = orbitControlsRef.current;
       controls.target.lerp(focusTargetRef.current, 0.18);
@@ -179,8 +220,8 @@ export const NeonShapeMesh = ({ shape, transformMode, orbitControlsRef }: NeonSh
     if (!current) return;
     const handle = () => {
       updateShape(shape.id, {
-        position: vectorTuple(current.position),
-        rotation: vectorTuple(current.rotation),
+        position: planarTuple(current.position),
+        rotation: yawTuple(current.rotation),
         scale: vectorTuple(current.scale)
       });
     };
@@ -196,7 +237,7 @@ export const NeonShapeMesh = ({ shape, transformMode, orbitControlsRef }: NeonSh
           return null;
         }
         return (
-          <mesh castShadow receiveShadow rotation={[-Math.PI / 2, 0, 0]}>
+          <mesh castShadow receiveShadow>
             <tubeGeometry
               key={`${shape.kind}-${shape.thickness.toFixed(3)}`}
               args={[neonCurve.curve, neonCurve.tubularSegments, neonRadius, 18, false]}
@@ -210,7 +251,7 @@ export const NeonShapeMesh = ({ shape, transformMode, orbitControlsRef }: NeonSh
             fontSize={0.4}
             color={shape.color}
             anchorX="center"
-            anchorY="middle"
+            anchorY="bottom"
             outlineWidth={0.03}
             outlineColor={shape.color}
             outlineOpacity={0.4 + shape.glowRadius * 0.1}
@@ -260,11 +301,13 @@ export const NeonShapeMesh = ({ shape, transformMode, orbitControlsRef }: NeonSh
           mode={transformMode}
           camera={camera}
           enabled
+          showZ={false}
+          showX={transformMode !== 'rotate'}
           onObjectChange={() => {
             if (!group.current) return;
             updateShape(shape.id, {
-              position: vectorTuple(group.current.position),
-              rotation: vectorTuple(group.current.rotation),
+              position: planarTuple(group.current.position),
+              rotation: yawTuple(group.current.rotation),
               scale: vectorTuple(group.current.scale)
             });
           }}
@@ -290,7 +333,7 @@ const SvgShape = ({ path, material }: SvgShapeProps) => {
   }, [path]);
 
   return (
-    <group ref={group} scale={0.008} rotation={[-Math.PI / 2, 0, 0]}>
+    <group ref={group} scale={0.008}>
       {shapes.map((shape, index) => (
         <mesh key={index} position={[0, 0, 0]}>
           <shapeGeometry args={[shape]} />

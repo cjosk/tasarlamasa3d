@@ -61,7 +61,7 @@ export const InspectorPanel = () => {
           />
         </label>
         <p className="rounded-2xl border border-slate-700/70 bg-slate-900/80 p-3 text-[11px] uppercase tracking-[0.3em] text-slate-400">
-          Thickness is locked to 6&nbsp;mm for consistent neon lines.
+          Thickness is locked to 17&nbsp;mm for consistent neon lines.
         </p>
       </div>
     </div>
