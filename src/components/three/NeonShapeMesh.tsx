@@ -79,6 +79,9 @@ export const NeonShapeMesh = ({ shape, transformMode, orbitControlsRef }: NeonSh
   const group = useRef<Group | null>(null);
   const [attachedObject, setAttachedObject] = useState<Group | null>(null);
   const transformRef = useRef<TransformControlsClass | null>(null);
+  const focusTargetRef = useRef(new Vector3());
+  const pendingFocusRef = useRef(false);
+  const worldPositionRef = useRef(new Vector3());
   const selectShape = useDesignStore((state) => state.selectShape);
   const updateShape = useDesignStore((state) => state.updateShape);
   const setTransforming = useDesignStore((state) => state.setTransforming);
@@ -87,44 +90,20 @@ export const NeonShapeMesh = ({ shape, transformMode, orbitControlsRef }: NeonSh
   const isSelected = selectedId === shape.id;
 
   useEffect(() => {
-    if (!isSelected) {
-      setTransforming(false);
-      if (orbitControlsRef.current) {
-        orbitControlsRef.current.enabled = true;
-      }
-    }
-    return () => {
-      setTransforming(false);
-      if (orbitControlsRef.current) {
-        orbitControlsRef.current.enabled = true;
-      }
-    };
-  }, [isSelected, orbitControlsRef, setTransforming]);
-
-  useEffect(() => {
     const controls = transformRef.current;
     if (!controls) return;
 
     const handleDragChange = (event: any) => {
       const isDragging = Boolean(event?.value);
       setTransforming(isDragging);
-      if (orbitControlsRef.current) {
-        orbitControlsRef.current.enabled = !isDragging;
-      }
     };
 
     const handleDragStart = () => {
       setTransforming(true);
-      if (orbitControlsRef.current) {
-        orbitControlsRef.current.enabled = false;
-      }
     };
 
     const handleDragEnd = () => {
       setTransforming(false);
-      if (orbitControlsRef.current) {
-        orbitControlsRef.current.enabled = true;
-      }
     };
 
     (controls as any).addEventListener('dragging-changed', handleDragChange);
@@ -139,12 +118,23 @@ export const NeonShapeMesh = ({ shape, transformMode, orbitControlsRef }: NeonSh
       (controls as any).removeEventListener('mouseUp', handleDragEnd);
       (controls as any).removeEventListener('touchStart', handleDragStart);
       (controls as any).removeEventListener('touchEnd', handleDragEnd);
-      if (orbitControlsRef.current) {
-        orbitControlsRef.current.enabled = true;
-      }
       setTransforming(false);
     };
-  }, [orbitControlsRef, setTransforming, isSelected]);
+  }, [setTransforming]);
+
+  const queueFocus = () => {
+    if (!group.current) return;
+    group.current.updateMatrixWorld();
+    group.current.getWorldPosition(worldPositionRef.current);
+    focusTargetRef.current.copy(worldPositionRef.current);
+    pendingFocusRef.current = true;
+  };
+
+  useEffect(() => {
+    if (isSelected) {
+      queueFocus();
+    }
+  }, [isSelected]);
 
   useEffect(() => {
     if (!group.current) return;
@@ -167,6 +157,16 @@ export const NeonShapeMesh = ({ shape, transformMode, orbitControlsRef }: NeonSh
   const neonRadius = useMemo(() => Math.max(shape.thickness / 4, 0.01), [shape.thickness]);
 
   useFrame(({ clock }) => {
+    if (pendingFocusRef.current && orbitControlsRef.current) {
+      const controls = orbitControlsRef.current;
+      controls.target.lerp(focusTargetRef.current, 0.18);
+      controls.update();
+      if (controls.target.distanceToSquared(focusTargetRef.current) < 1e-5) {
+        controls.target.copy(focusTargetRef.current);
+        controls.update();
+        pendingFocusRef.current = false;
+      }
+    }
     if (!material) return;
     const base = shape.intensity;
     const flicker = shape.animated ? Math.sin(clock.elapsedTime * 3) * 0.3 : 0;
@@ -232,6 +232,7 @@ export const NeonShapeMesh = ({ shape, transformMode, orbitControlsRef }: NeonSh
           if (!instance) {
             group.current = null;
             setAttachedObject(null);
+            pendingFocusRef.current = false;
             return;
           }
           group.current = instance;
@@ -240,6 +241,7 @@ export const NeonShapeMesh = ({ shape, transformMode, orbitControlsRef }: NeonSh
         onPointerDown={(event) => {
           event.stopPropagation();
           selectShape(shape.id);
+          queueFocus();
         }}
         onPointerMissed={(event) => {
           if (event.type === 'pointerdown') {
