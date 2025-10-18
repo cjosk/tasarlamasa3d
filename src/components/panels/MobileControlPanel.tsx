@@ -4,11 +4,7 @@ import clsx from 'clsx';
 import { Canvas } from '@react-three/fiber';
 import type { Vector3Tuple } from 'three';
 import { TubeGeometry } from 'three';
-import {
-  movementLimits,
-  selectTableHeights,
-  useDesignStore
-} from '../../state/designStore';
+import { selectMovementLimits, selectTableHeights, useDesignStore } from '../../state/designStore';
 import { useDesignContext } from '../../providers/DesignProvider';
 import { NEON_PALETTE } from './ColorPicker';
 import type { CanonicalShapeKind } from '../../types/design';
@@ -24,7 +20,7 @@ const SHAPE_OPTIONS = [
   { kind: 'sharp_triangle', label: 'Sharp Triangle' },
   { kind: 'deep_v_shape', label: 'Deep V' },
   { kind: 'smooth_n_curve', label: 'Smooth N' },
-  { kind: 'sharp_m_shape', label: 'Sharp M' }
+  { kind: 'sharp_m_shape', label: 'Sharp W' }
 ] as const satisfies readonly { kind: CanonicalShapeKind; label: string }[];
 
 type ShapeOption = (typeof SHAPE_OPTIONS)[number];
@@ -64,6 +60,7 @@ export const MobileControlPanel = () => {
   const layerListRef = useRef<HTMLUListElement | null>(null);
   const [layerHasOverflow, setLayerHasOverflow] = useState(false);
   const [libraryOpen, setLibraryOpen] = useState(false);
+  const movementLimits = useDesignStore(selectMovementLimits);
   const { x: limitX, y: limitY } = movementLimits;
   const tableSizeId = useDesignStore((state) => state.history.present.tableSizeId);
   const setTableSize = useDesignStore((state) => state.setTableSize);

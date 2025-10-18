@@ -13,7 +13,7 @@ const SHAPE_OPTIONS: ShapeOption[] = [
   { kind: 'sharp_triangle', label: 'Sharp Triangle', icon: <Triangle className="h-4 w-4" /> },
   { kind: 'deep_v_shape', label: 'Deep V', icon: <ChevronDown className="h-4 w-4" /> },
   { kind: 'smooth_n_curve', label: 'Smooth N', icon: <Shapes className="h-4 w-4" /> },
-  { kind: 'sharp_m_shape', label: 'Sharp M', icon: <LineChart className="h-4 w-4" /> }
+  { kind: 'sharp_m_shape', label: 'Sharp W', icon: <LineChart className="h-4 w-4" /> }
 ];
 
 export const ShapeDropdown = () => {

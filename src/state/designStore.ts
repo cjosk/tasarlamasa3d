@@ -13,7 +13,8 @@ import {
 import {
   DEFAULT_TABLE_SIZE_ID,
   getTableHeights,
-  getTableProfile
+  getTableProfile,
+  type TableSizeOption
 } from '../components/three/layers/tableDimensions';
 import type { TableSizeId } from '../components/three/layers/tableDimensions';
 
@@ -108,28 +109,45 @@ const LABEL_PRESETS: Record<CanonicalShapeKind, string> = {
   sharp_triangle: 'Sharp Triangle',
   deep_v_shape: 'Deep V',
   smooth_n_curve: 'Smooth N',
-  sharp_m_shape: 'Sharp M',
+  sharp_m_shape: 'Sharp W',
   text: 'Neon Text',
   svg: 'Imported SVG'
 };
 
 const NEON_THICKNESS = 0.017;
 const STACK_SPACING = 0.08;
-const LIMIT_X = 0.5; // 50 cm expressed in meters
-const LIMIT_Y = 0.4; // 40 cm expressed in meters
+const MOVEMENT_MARGIN = 0.05; // 5 cm safety padding inside the glass walls
+const MIN_BOUND = 0.05;
+const VERTICAL_RANGE_RATIO = 0.5;
 
 const resolveTableSizeId = (sizeId?: TableSizeId): TableSizeId => sizeId ?? DEFAULT_TABLE_SIZE_ID;
 
 const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
 
+const calculateMovementLimits = (profile: TableSizeOption) => {
+  const halfWidth = profile.width / 2;
+  const baseLimitX = halfWidth - MOVEMENT_MARGIN;
+  const horizontalLimit = Math.max(MIN_BOUND, baseLimitX);
+
+  const heights = getTableHeights(profile);
+  const verticalFromTable = Math.max(MIN_BOUND, profile.height * VERTICAL_RANGE_RATIO);
+  const glassHeadroom = Math.max(MIN_BOUND, heights.glassHeight - profile.neonLift);
+
+  return {
+    x: horizontalLimit,
+    y: Math.min(verticalFromTable, glassHeadroom)
+  } as const;
+};
+
 const constrainPosition = (position: Vector3Tuple, tableSizeId: TableSizeId): Vector3Tuple => {
   const profile = getTableProfile(tableSizeId);
   const heights = getTableHeights(profile);
+  const limits = calculateMovementLimits(profile);
   const minY = heights.neonSurfaceY;
-  const maxY = heights.neonSurfaceY + LIMIT_Y;
+  const maxY = minY + limits.y;
 
   return [
-    clamp(position[0], -LIMIT_X, LIMIT_X),
+    clamp(position[0], -limits.x, limits.x),
     clamp(position[1], minY, maxY),
     0
   ] as Vector3Tuple;
@@ -219,8 +237,9 @@ export const useDesignStore = create<DesignStoreState>()(
         const activeSizeId = resolveTableSizeId(state.history.present.tableSizeId);
         const profile = getTableProfile(activeSizeId);
         const heights = getTableHeights(profile);
+        const limits = calculateMovementLimits(profile);
         const nextIndex = state.history.present.shapes.length;
-        const stackedYOffset = Math.min(nextIndex * STACK_SPACING, LIMIT_Y);
+        const stackedYOffset = Math.min(nextIndex * STACK_SPACING, limits.y);
         const rawPosition: Vector3Tuple = [shape.position[0], heights.neonSurfaceY + stackedYOffset, 0];
         const positionedShape = sanitizeShape(
           {
@@ -329,9 +348,10 @@ export const useDesignStore = create<DesignStoreState>()(
           ...clone(data),
           tableSizeId: resolvedSizeId,
           shapes: (data.shapes ?? []).map((shape, index) => {
+            const limits = calculateMovementLimits(profile);
             const rawPosition: Vector3Tuple = [
               shape.position?.[0] ?? 0,
-              shape.position?.[1] ?? heights.neonSurfaceY + Math.min(index * STACK_SPACING, LIMIT_Y),
+              shape.position?.[1] ?? heights.neonSurfaceY + Math.min(index * STACK_SPACING, limits.y),
               0
             ];
             const rawRotation: Vector3Tuple = [
@@ -398,4 +418,7 @@ export const selectTableProfile = (state: DesignStoreState) =>
   getTableProfile(resolveTableSizeId(state.history.present.tableSizeId));
 export const selectTableHeights = (state: DesignStoreState) =>
   getTableHeights(getTableProfile(resolveTableSizeId(state.history.present.tableSizeId)));
-export const movementLimits = { x: LIMIT_X, y: LIMIT_Y } as const;
+export const selectMovementLimits = (state: DesignStoreState) =>
+  calculateMovementLimits(getTableProfile(resolveTableSizeId(state.history.present.tableSizeId)));
+
+export { calculateMovementLimits as getMovementLimits };

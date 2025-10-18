@@ -1,6 +1,6 @@
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Environment, ContactShadows, Html } from '@react-three/drei';
-import { Suspense, useMemo, useRef } from 'react';
+import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { EffectComposer, Bloom } from '@react-three/postprocessing';
 import { NeonShapeMesh } from './NeonShapeMesh';
 import {
@@ -28,6 +28,32 @@ export const ThreeCanvas = () => {
     () => [0, tableHeights.neonSurfaceY + 0.25, 0] as const,
     [tableHeights.neonSurfaceY]
   );
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    if (!orbitControlsRef.current) {
+      return;
+    }
+    orbitControlsRef.current.target.set(...cameraTarget);
+    orbitControlsRef.current.update();
+  }, [cameraTarget]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+    const query = window.matchMedia('(max-width: 768px)');
+    const update = () => setIsMobile(query.matches);
+    update();
+
+    if (typeof query.addEventListener === 'function') {
+      query.addEventListener('change', update);
+      return () => query.removeEventListener('change', update);
+    }
+
+    query.addListener(update);
+    return () => query.removeListener(update);
+  }, []);
 
   const bloomConfig = useMemo(
     () => ({
@@ -104,6 +130,7 @@ export const ThreeCanvas = () => {
               ref={orbitControlsRef}
               target={cameraTarget}
               enablePan={false}
+              enableRotate={!isMobile}
               minPolarAngle={Math.PI / 4}
               maxPolarAngle={(2 * Math.PI) / 3}
               minDistance={2}

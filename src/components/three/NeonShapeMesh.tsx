@@ -2,7 +2,7 @@ import { MutableRefObject, useEffect, useMemo, useRef, useState } from 'react';
 import { Group, MeshStandardMaterial, Shape as ThreeShape, Vector3, Vector3Tuple } from 'three';
 import { TransformControls, Text } from '@react-three/drei';
 import { NeonShape } from '../../types/design';
-import { useDesignStore, movementLimits, selectTableHeights } from '../../state/designStore';
+import { useDesignStore, selectMovementLimits, selectTableHeights } from '../../state/designStore';
 import { useFrame, useThree } from '@react-three/fiber';
 import { SVGLoader } from 'three/examples/jsm/loaders/SVGLoader.js';
 import { OrbitControls as OrbitControlsImpl, TransformControls as TransformControlsClass } from 'three-stdlib';
@@ -57,6 +57,7 @@ export const NeonShapeMesh = ({ shape, transformMode, orbitControlsRef }: NeonSh
   const setTransforming = useDesignStore((state) => state.setTransforming);
   const selectedId = useDesignStore((state) => state.history.present.selectedId);
   const tableHeights = useDesignStore(selectTableHeights);
+  const movementLimits = useDesignStore(selectMovementLimits);
   const { camera } = useThree();
   const isSelected = selectedId === shape.id;
   const limitX = movementLimits.x;
@@ -266,6 +267,7 @@ export const NeonShapeMesh = ({ shape, transformMode, orbitControlsRef }: NeonSh
           enabled
           showZ={false}
           showX={transformMode !== 'rotate'}
+          showY
           onObjectChange={() => {
             if (!group.current) return;
             group.current.rotation.x = Math.PI;
