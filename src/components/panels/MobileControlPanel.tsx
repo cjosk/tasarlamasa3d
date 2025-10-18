@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { MoveDown, MoveLeft, MoveRight, MoveUp, RotateCw } from 'lucide-react';
 import clsx from 'clsx';
 import type { Vector3Tuple } from 'three';
@@ -24,7 +24,18 @@ const SHAPE_OPTIONS = [
 type ShapeOption = (typeof SHAPE_OPTIONS)[number];
 
 type MoveDirection = 'left' | 'right' | 'up' | 'down';
-type MovementAction = MoveDirection | 'rotate';
+type MovementButton =
+  | {
+      kind: 'move';
+      direction: MoveDirection;
+      icon: ReactNode;
+      label: string;
+    }
+  | {
+      kind: 'rotate';
+      icon: ReactNode;
+      label: string;
+    };
 
 export const MobileControlPanel = () => {
   const selectedId = useDesignStore((state) => state.history.present.selectedId);
@@ -194,15 +205,14 @@ export const MobileControlPanel = () => {
 
   const finishDisabled = finishing || exporting || !canvasRef.current;
 
-  const movementButtons = useMemo(
-    () =>
-      [
-        { direction: 'left' as MovementAction, icon: <MoveLeft className="h-5 w-5" />, label: 'Sola taşı' },
-        { direction: 'up' as MovementAction, icon: <MoveUp className="h-5 w-5" />, label: 'Yukarı taşı' },
-        { direction: 'rotate' as MovementAction, icon: <RotateCw className="h-5 w-5" />, label: 'Döndür' },
-        { direction: 'down' as MovementAction, icon: <MoveDown className="h-5 w-5" />, label: 'Aşağı taşı' },
-        { direction: 'right' as MovementAction, icon: <MoveRight className="h-5 w-5" />, label: 'Sağa taşı' }
-      ] as const,
+  const movementButtons = useMemo<readonly MovementButton[]>(
+    () => [
+      { kind: 'move', direction: 'left', icon: <MoveLeft className="h-5 w-5" />, label: 'Sola taşı' },
+      { kind: 'move', direction: 'up', icon: <MoveUp className="h-5 w-5" />, label: 'Yukarı taşı' },
+      { kind: 'rotate', icon: <RotateCw className="h-5 w-5" />, label: 'Döndür' },
+      { kind: 'move', direction: 'down', icon: <MoveDown className="h-5 w-5" />, label: 'Aşağı taşı' },
+      { kind: 'move', direction: 'right', icon: <MoveRight className="h-5 w-5" />, label: 'Sağa taşı' }
+    ],
     []
   );
 
@@ -228,10 +238,10 @@ export const MobileControlPanel = () => {
             />
           );
 
-          if (button.direction === 'rotate') {
+          if (button.kind === 'rotate') {
             return (
               <button
-                key={button.direction}
+                key="rotate"
                 type="button"
                 className={buttonClassName}
                 aria-label={button.label}
@@ -264,7 +274,8 @@ export const MobileControlPanel = () => {
               onPointerDown={(event) => {
                 event.preventDefault();
                 if (isActionDisabled) return;
-                handlePress(() => moveShape(button.direction));
+                const direction = button.direction;
+                handlePress(() => moveShape(direction));
               }}
               onPointerUp={(event) => {
                 event.preventDefault();

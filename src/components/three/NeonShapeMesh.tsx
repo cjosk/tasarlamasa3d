@@ -1,5 +1,12 @@
 import { MutableRefObject, useEffect, useMemo, useRef, useState } from 'react';
-import { CatmullRomCurve3, Group, MeshStandardMaterial, Shape, Vector3, Vector3Tuple } from 'three';
+import {
+  CatmullRomCurve3,
+  Group,
+  MeshStandardMaterial,
+  Shape as ThreeShape,
+  Vector3,
+  Vector3Tuple
+} from 'three';
 import { TransformControls, Text } from '@react-three/drei';
 import { NeonShape } from '../../types/design';
 import { useDesignStore, movementLimits, selectTableHeights } from '../../state/designStore';
@@ -330,13 +337,13 @@ interface SvgShapeProps {
 const SvgShape = ({ path, material }: SvgShapeProps) => {
   const group = useRef<Group | null>(null);
 
-  const { shapes, offsetY } = useMemo(() => {
+  const { shapes, offsetY } = useMemo<{ shapes: ThreeShape[]; offsetY: number }>(() => {
     if (!path) {
-      return { shapes: [] as Shape[], offsetY: 0 };
+      return { shapes: [], offsetY: 0 };
     }
     const loader = new SVGLoader();
     const data = loader.parse(path);
-    const svgShapes = data.paths.flatMap((svgPath) => svgPath.toShapes(true)) as Shape[];
+    const svgShapes = data.paths.flatMap((svgPath) => svgPath.toShapes(true));
 
     let minY = Infinity;
     svgShapes.forEach((shape) => {
