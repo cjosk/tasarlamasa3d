@@ -56,7 +56,7 @@ export const EnvironmentPreviewPanel = () => {
   };
 
   return (
-    <div className="pointer-events-auto fixed bottom-5 left-5 z-40 flex gap-2 rounded-2xl border border-slate-700/60 bg-slate-900/70 p-2 shadow-[0_0_25px_rgba(0,0,0,0.5)] backdrop-blur-lg">
+    <div className="pointer-events-auto flex w-full justify-center gap-3 rounded-2xl border border-slate-700/40 bg-slate-900/50 p-2 shadow-md backdrop-blur-lg">
       {ENVIRONMENTS.map((option) => (
         <button
           key={option.id}

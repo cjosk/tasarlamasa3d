@@ -10,6 +10,7 @@ import { NEON_PALETTE } from './ColorPicker';
 import type { CanonicalShapeKind } from '../../types/design';
 import type { TableSizeId } from '../three/layers/tableDimensions';
 import { createNeonCurve } from '../three/neonCurves';
+import { EnvironmentPreviewPanel } from './EnvironmentPreviewPanel';
 
 const POSITION_STEP = 0.05;
 const ROTATION_STEP = Math.PI / 12; // 15°
@@ -277,7 +278,8 @@ export const MobileControlPanel = () => {
   );
 
   return (
-    <div className="flex flex-col gap-3 pb-4">
+    <div className="flex flex-col gap-4 pb-4">
+      <EnvironmentPreviewPanel />
       <div className="flex items-center justify-between">
         <span className="text-[11px] font-semibold uppercase tracking-[0.35em] text-slate-300">Kontroller</span>
         <button

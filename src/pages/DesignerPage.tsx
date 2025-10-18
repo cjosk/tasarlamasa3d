@@ -11,7 +11,6 @@ import { useSearchParams } from 'react-router-dom';
 import { useFirebase } from '../providers/FirebaseProvider';
 import { TableSizePanel } from '../components/panels/TableSizePanel';
 import { MobileControlPanel } from '../components/panels/MobileControlPanel';
-import { EnvironmentPreviewPanel } from '../components/panels/EnvironmentPreviewPanel';
 
 export const DesignerPage = () => {
   const [searchParams] = useSearchParams();
@@ -72,7 +71,6 @@ export const DesignerPage = () => {
           </div>
         </div>
       </div>
-      <EnvironmentPreviewPanel />
     </div>
   );
 };

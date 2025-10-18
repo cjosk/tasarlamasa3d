@@ -105,7 +105,11 @@ export const ThreeCanvas = () => {
               blur={2.8}
               far={10}
             />
-            <Environment files={environment} background />
+            <Environment
+              files={environment}
+              background
+              ground={{ height: 5, radius: 50, scale: 50 }}
+            />
             <OrbitControls
               ref={orbitControlsRef}
               target={cameraTarget}
