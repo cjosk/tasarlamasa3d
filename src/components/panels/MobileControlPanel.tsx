@@ -54,9 +54,11 @@ export const MobileControlPanel = () => {
   const setError = useDesignStore((state) => state.setError);
   const [finishing, setFinishing] = useState(false);
   const [layersOpen, setLayersOpen] = useState(false);
+  const [isAtBottom, setIsAtBottom] = useState(false);
   const rafRef = useRef<number | null>(null);
   const lastFrameRef = useRef<number>(0);
   const layerListRef = useRef<HTMLUListElement | null>(null);
+  const panelRef = useRef<HTMLDivElement | null>(null);
   const [layerHasOverflow, setLayerHasOverflow] = useState(false);
   const { x: limitX, y: limitY } = movementLimits;
   const tableSizeId = useDesignStore((state) => state.history.present.tableSizeId);
@@ -121,6 +123,24 @@ export const MobileControlPanel = () => {
       list.removeEventListener('scroll', evaluateOverflow);
     };
   }, [shapes.length]);
+
+  useEffect(() => {
+    const container = panelRef.current?.parentElement;
+    if (!container) return;
+
+    const evaluatePosition = () => {
+      const threshold = 8;
+      const atBottom = container.scrollTop + container.clientHeight >= container.scrollHeight - threshold;
+      setIsAtBottom(atBottom);
+    };
+
+    evaluatePosition();
+    container.addEventListener('scroll', evaluatePosition, { passive: true });
+
+    return () => {
+      container.removeEventListener('scroll', evaluatePosition);
+    };
+  }, [layersOpen, shapes.length]);
 
   const clampPosition = useCallback(
     (x: number, y: number): Vector3Tuple => {
@@ -284,7 +304,7 @@ export const MobileControlPanel = () => {
   );
 
   return (
-    <div className="flex flex-col gap-4 pb-6">
+    <div ref={panelRef} className="flex flex-col gap-4 pb-6">
       <div className="flex items-center justify-between">
         <span className="text-[11px] font-semibold uppercase tracking-[0.35em] text-slate-300">Kontroller</span>
         <button
@@ -470,7 +490,13 @@ export const MobileControlPanel = () => {
           })}
         </div>
       </div>
-      <div className="sticky bottom-0 left-0 right-0 pt-2">
+      <div
+        className={clsx(
+          'sticky bottom-0 left-0 right-0 pt-2 transition-opacity duration-200',
+          isAtBottom ? 'opacity-100' : 'pointer-events-none opacity-0'
+        )}
+        aria-hidden={!isAtBottom}
+      >
         <div className="rounded-2xl bg-slate-900/90 p-3 shadow-inner shadow-slate-900/60">
           <button
             type="button"

@@ -65,9 +65,8 @@ export const DesignerPage = () => {
           <ThreeCanvas />
           <OnboardingGuide />
         </div>
-        <div className="pt-[60vh]" aria-hidden />
-        <div className="fixed bottom-0 left-0 right-0">
-          <div className="bg-slate-900/80 backdrop-blur-2xl rounded-t-3xl border-t border-slate-800 px-4 pb-4 pt-0 shadow-lg max-h-[40vh] overflow-y-auto">
+        <div className="absolute top-[60vh] bottom-0 left-0 right-0">
+          <div className="h-full overflow-y-auto rounded-t-3xl border-t border-slate-800 bg-slate-900/80 px-4 pb-4 pt-0 shadow-lg shadow-slate-900/60 backdrop-blur-2xl">
             <MobileControlPanel />
           </div>
         </div>

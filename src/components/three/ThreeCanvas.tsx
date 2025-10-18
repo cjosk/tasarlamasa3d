@@ -23,8 +23,8 @@ export const ThreeCanvas = () => {
   const tableProfile = useDesignStore(selectTableProfile);
   const shapes = design.shapes;
   const orbitControlsRef = useRef<OrbitControlsImpl | null>(null);
-  const cameraPosition = useMemo(() => [0, 25, 70] as const, []);
-  const cameraTarget = useMemo(() => [0, 15, 0] as const, []);
+  const cameraPosition = useMemo(() => [0, 20, 55] as const, []);
+  const cameraTarget = useMemo(() => [0, 12, 0] as const, []);
 
   const bloomConfig = useMemo(
     () => ({
