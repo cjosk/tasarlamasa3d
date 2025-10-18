@@ -59,12 +59,11 @@ export const MobileControlPanel = () => {
   const setError = useDesignStore((state) => state.setError);
   const [finishing, setFinishing] = useState(false);
   const [layersOpen, setLayersOpen] = useState(false);
-  const [isAtBottom, setIsAtBottom] = useState(false);
   const rafRef = useRef<number | null>(null);
   const lastFrameRef = useRef<number>(0);
   const layerListRef = useRef<HTMLUListElement | null>(null);
-  const panelRef = useRef<HTMLDivElement | null>(null);
   const [layerHasOverflow, setLayerHasOverflow] = useState(false);
+  const [libraryOpen, setLibraryOpen] = useState(false);
   const { x: limitX, y: limitY } = movementLimits;
   const tableSizeId = useDesignStore((state) => state.history.present.tableSizeId);
   const setTableSize = useDesignStore((state) => state.setTableSize);
@@ -128,24 +127,6 @@ export const MobileControlPanel = () => {
       list.removeEventListener('scroll', evaluateOverflow);
     };
   }, [shapes.length]);
-
-  useEffect(() => {
-    const container = panelRef.current?.parentElement;
-    if (!container) return;
-
-    const evaluatePosition = () => {
-      const threshold = 8;
-      const atBottom = container.scrollTop + container.clientHeight >= container.scrollHeight - threshold;
-      setIsAtBottom(atBottom);
-    };
-
-    evaluatePosition();
-    container.addEventListener('scroll', evaluatePosition, { passive: true });
-
-    return () => {
-      container.removeEventListener('scroll', evaluatePosition);
-    };
-  }, [layersOpen, shapes.length]);
 
   const clampPosition = useCallback(
     (x: number, y: number): Vector3Tuple => {
@@ -303,13 +284,37 @@ export const MobileControlPanel = () => {
   );
 
   return (
-    <div ref={panelRef} className="flex flex-col gap-4 pb-6">
+    <div className="flex flex-col gap-4 pb-4">
+      <div className="flex flex-col items-center gap-2">
+        <span className="text-[11px] font-semibold uppercase tracking-[0.35em] text-slate-300">Renkler</span>
+        <div className="flex flex-nowrap items-center justify-center gap-2">
+          {NEON_PALETTE.map((color) => {
+            const isActive = selectedShape?.color?.toLowerCase() === color.toLowerCase();
+            return (
+              <button
+                key={color}
+                type="button"
+                onClick={() => applyColor(color)}
+                disabled={!selectedId}
+                style={{ backgroundColor: color }}
+                className={clsx(
+                  'h-8 w-8 flex-shrink-0 rounded-full border transition-transform duration-150 ease-micro',
+                  isActive ? 'border-neon-pink/80' : 'border-slate-700/70',
+                  'hover:scale-105 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:scale-100'
+                )}
+                aria-label={`Rengi ${color} yap`}
+                aria-pressed={isActive}
+              />
+            );
+          })}
+        </div>
+      </div>
       <div className="flex items-center justify-between">
         <span className="text-[11px] font-semibold uppercase tracking-[0.35em] text-slate-300">Kontroller</span>
-        <button
-          type="button"
-          onClick={() => setLayersOpen((prev) => !prev)}
-          className={clsx(
+      <button
+        type="button"
+        onClick={() => setLayersOpen((prev) => !prev)}
+        className={clsx(
             'flex h-10 w-10 items-center justify-center rounded-full border border-slate-700/60 bg-slate-900/80 text-slate-200 transition-colors duration-150 ease-micro',
             'hover:border-neon-blue/60 hover:text-white active:scale-95'
           )}
@@ -424,51 +429,46 @@ export const MobileControlPanel = () => {
           );
         })}
       </div>
-      <div className="grid grid-cols-4 gap-2">
-        {SHAPE_OPTIONS.map((option) => {
-          const isActive = selectedShape?.kind === option.kind;
-          return (
-            <button
-              key={option.kind}
-              type="button"
-              onClick={() => handleAddShape(option)}
-              className={clsx(
-                'relative flex items-center justify-center rounded-2xl border bg-slate-900/60 transition-all duration-150 ease-micro',
-                'border-slate-700/80 hover:border-neon-blue/60 active:scale-95',
-                isActive && 'ring-2 ring-neon-blue/50'
-              )}
-              aria-label={option.label}
-            >
-              <ShapePreview kind={option.kind} />
-              <span className="sr-only">{option.label}</span>
-            </button>
-          );
-        })}
+      <button
+        type="button"
+        onClick={() => setLibraryOpen((prev) => !prev)}
+        className="w-full rounded-2xl bg-slate-800/80 border border-slate-700 text-slate-200 text-sm font-semibold py-3 transition hover:bg-slate-700"
+        aria-expanded={libraryOpen}
+      >
+        Şekil Kütüphanesi
+      </button>
+      <div
+        className={clsx(
+          'overflow-hidden transition-all duration-300 ease-in-out',
+          libraryOpen ? 'max-h-56 opacity-100' : 'max-h-0 opacity-0'
+        )}
+        aria-hidden={!libraryOpen}
+      >
+        <div className="mt-2 grid grid-cols-4 justify-center gap-2">
+          {SHAPE_OPTIONS.map((option) => {
+            const isActive = selectedShape?.kind === option.kind;
+            return (
+              <button
+                key={option.kind}
+                type="button"
+                onClick={() => handleAddShape(option)}
+                className={clsx(
+                  'relative flex h-16 w-16 items-center justify-center rounded-xl border bg-slate-900/70 transition-all duration-150 ease-micro',
+                  'border-slate-700/70 hover:border-neon-blue/50 active:scale-95',
+                  isActive && 'ring-2 ring-neon-blue/50'
+                )}
+                aria-label={option.label}
+              >
+                <ShapePreview kind={option.kind} />
+                <span className="sr-only">{option.label}</span>
+              </button>
+            );
+          })}
+        </div>
       </div>
-      <div className="mt-3 flex flex-nowrap items-center justify-center gap-3 overflow-x-auto">
-        {NEON_PALETTE.map((color) => {
-          const isActive = selectedShape?.color?.toLowerCase() === color.toLowerCase();
-          return (
-            <button
-              key={color}
-              type="button"
-              onClick={() => applyColor(color)}
-              disabled={!selectedId}
-              style={{ backgroundColor: color }}
-              className={clsx(
-                'h-10 w-10 flex-shrink-0 rounded-full border transition-transform duration-150 ease-micro',
-                isActive ? 'border-neon-pink/80' : 'border-slate-700/70',
-                'hover:scale-105 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:scale-100'
-              )}
-              aria-label={`Rengi ${color} yap`}
-              aria-pressed={isActive}
-            />
-          );
-        })}
-      </div>
-      <div className="mt-4 flex flex-col gap-3">
-        <span className="text-center text-[11px] uppercase tracking-[0.3em] text-slate-400">MASA BOYUTU</span>
-        <div className="flex justify-center gap-3">
+      <div className="flex flex-col gap-2">
+        <span className="text-center text-[11px] uppercase tracking-[0.3em] text-slate-400">Masa Boyutu</span>
+        <div className="grid grid-cols-4 gap-2">
           {MOBILE_TABLE_SIZES.map((option) => {
             const matchesCurrent = tableSizeId === option.id;
             return (
@@ -477,40 +477,29 @@ export const MobileControlPanel = () => {
                 type="button"
                 onClick={() => handleTableSizePress(option)}
                 className={clsx(
-                  'px-4 py-2 text-sm font-semibold uppercase tracking-[0.25em] transition-colors duration-150',
-                  'rounded-full border backdrop-blur-md',
+                  'rounded-full px-3 py-2 text-xs font-semibold uppercase tracking-[0.18em] transition-colors duration-150',
                   matchesCurrent
-                    ? 'border-neon-pink/80 bg-neon-pink/40 text-white shadow-[0_0_20px_rgba(236,72,153,0.35)]'
-                    : 'border-slate-700/70 text-slate-300 hover:border-neon-blue/60 hover:text-white'
+                    ? 'bg-neon-pink text-white shadow-[0_0_16px_rgba(236,72,153,0.45)]'
+                    : 'bg-slate-800/80 text-slate-300 border border-slate-700 hover:border-neon-blue/60 hover:text-white'
                 )}
               >
-                {option.label}
+                {option.label} EBAT
               </button>
             );
           })}
         </div>
       </div>
-      <div
+      <button
+        type="button"
+        onClick={handleFinish}
+        disabled={finishDisabled}
         className={clsx(
-          'sticky bottom-0 left-0 right-0 pt-2 transition-opacity duration-200',
-          isAtBottom ? 'opacity-100' : 'pointer-events-none opacity-0'
+          'mt-1 flex w-full items-center justify-center rounded-2xl bg-neon-pink/80 px-6 py-3 text-sm font-bold uppercase tracking-[0.35em] text-white shadow-lg shadow-neon-pink/40 backdrop-blur-xl transition-all',
+          'hover:bg-neon-pink disabled:cursor-not-allowed disabled:opacity-60'
         )}
-        aria-hidden={!isAtBottom}
       >
-        <div className="rounded-2xl bg-slate-900/90 p-3 shadow-inner shadow-slate-900/60">
-          <button
-            type="button"
-            onClick={handleFinish}
-            disabled={finishDisabled}
-            className={clsx(
-              'flex w-full items-center justify-center rounded-2xl bg-neon-pink/80 px-6 py-3 text-sm font-bold uppercase tracking-[0.35em] text-white shadow-lg shadow-neon-pink/40 backdrop-blur-xl transition-all',
-              'hover:bg-neon-pink disabled:cursor-not-allowed disabled:opacity-60'
-            )}
-          >
-            {finishing || exporting ? 'KAYDEDİLİYOR…' : 'TASARIMI BİTİR'}
-          </button>
-        </div>
-      </div>
+        {finishing || exporting ? 'KAYDEDİLİYOR…' : 'TASARIMI BİTİR'}
+      </button>
     </div>
   );
 };
