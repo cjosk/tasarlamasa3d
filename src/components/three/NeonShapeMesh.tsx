@@ -221,6 +221,12 @@ export const NeonShapeMesh = ({ shape, transformMode, orbitControlsRef }: NeonSh
               orbitControlsRef.current.enabled = true;
             }
           }}
+          onPointerCancel={() => {
+            setTransforming(false);
+            if (orbitControlsRef.current) {
+              orbitControlsRef.current.enabled = true;
+            }
+          }}
           onPointerMissed={() => {
             setTransforming(false);
             if (orbitControlsRef.current) {
