@@ -94,6 +94,8 @@ const STACK_SPACING = 0.08;
 const LIMIT_X = 0.5; // 50 cm expressed in meters
 const LIMIT_Y = 0.4; // 40 cm expressed in meters
 
+const resolveTableSizeId = (sizeId?: TableSizeId): TableSizeId => sizeId ?? DEFAULT_TABLE_SIZE_ID;
+
 const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
 
 const constrainPosition = (position: Vector3Tuple, tableSizeId: TableSizeId): Vector3Tuple => {
@@ -151,11 +153,13 @@ export const useDesignStore = create<DesignStoreState>()(
     error: undefined,
     setTableSize: (sizeId) =>
       set((state) => {
-        if (state.history.present.tableSizeId === sizeId) {
+        const currentSizeId = resolveTableSizeId(state.history.present.tableSizeId);
+
+        if (currentSizeId === sizeId) {
           return;
         }
 
-        const currentProfile = getTableProfile(state.history.present.tableSizeId);
+        const currentProfile = getTableProfile(currentSizeId);
         const nextProfile = getTableProfile(sizeId);
         const currentHeights = getTableHeights(currentProfile);
         const nextHeights = getTableHeights(nextProfile);
@@ -180,7 +184,8 @@ export const useDesignStore = create<DesignStoreState>()(
     addShape: (kind, payload) =>
       set((state) => {
         const shape = createShape(kind, payload);
-        const profile = getTableProfile(state.history.present.tableSizeId);
+        const activeSizeId = resolveTableSizeId(state.history.present.tableSizeId);
+        const profile = getTableProfile(activeSizeId);
         const heights = getTableHeights(profile);
         const nextIndex = state.history.present.shapes.length;
         const stackedYOffset = Math.min(nextIndex * STACK_SPACING, LIMIT_Y);
@@ -190,7 +195,7 @@ export const useDesignStore = create<DesignStoreState>()(
             ...shape,
             position: rawPosition
           },
-          state.history.present.tableSizeId
+          activeSizeId
         );
         const next: DesignStateData = {
           ...state.history.present,
@@ -201,6 +206,7 @@ export const useDesignStore = create<DesignStoreState>()(
       }),
     updateShape: (id, patch) =>
       set((state) => {
+        const activeSizeId = resolveTableSizeId(state.history.present.tableSizeId);
         const nextShapes = state.history.present.shapes.map((shape) => {
           if (shape.id !== id) {
             return shape;
@@ -213,7 +219,7 @@ export const useDesignStore = create<DesignStoreState>()(
             position: (restPatch.position as Vector3Tuple | undefined) ?? shape.position,
             rotation: (restPatch.rotation as Vector3Tuple | undefined) ?? shape.rotation
           };
-          return sanitizeShape(patched, state.history.present.tableSizeId);
+          return sanitizeShape(patched, activeSizeId);
         });
         const next: DesignStateData = {
           ...state.history.present,
@@ -283,12 +289,13 @@ export const useDesignStore = create<DesignStoreState>()(
       }),
     loadDesign: (data) =>
       set((state) => {
-        const profile = getTableProfile(data.tableSizeId);
+        const resolvedSizeId = resolveTableSizeId(data.tableSizeId);
+        const profile = getTableProfile(resolvedSizeId);
         const heights = getTableHeights(profile);
         const normalized: DesignStateData = {
           ...defaultDesign(),
           ...clone(data),
-          tableSizeId: data.tableSizeId ?? DEFAULT_TABLE_SIZE_ID,
+          tableSizeId: resolvedSizeId,
           shapes: (data.shapes ?? []).map((shape, index) => {
             const rawPosition: Vector3Tuple = [
               shape.position?.[0] ?? 0,
@@ -307,7 +314,7 @@ export const useDesignStore = create<DesignStoreState>()(
                 position: rawPosition,
                 rotation: rawRotation
               } as NeonShape,
-              data.tableSizeId ?? DEFAULT_TABLE_SIZE_ID
+              resolvedSizeId
             );
           })
         };
@@ -354,7 +361,7 @@ export const useDesignStore = create<DesignStoreState>()(
 
 export const selectCurrentDesign = (state: DesignStoreState) => state.history.present;
 export const selectTableProfile = (state: DesignStoreState) =>
-  getTableProfile(state.history.present.tableSizeId);
+  getTableProfile(resolveTableSizeId(state.history.present.tableSizeId));
 export const selectTableHeights = (state: DesignStoreState) =>
-  getTableHeights(getTableProfile(state.history.present.tableSizeId));
+  getTableHeights(getTableProfile(resolveTableSizeId(state.history.present.tableSizeId)));
 export const movementLimits = { x: LIMIT_X, y: LIMIT_Y } as const;
