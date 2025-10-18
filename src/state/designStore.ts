@@ -31,6 +31,7 @@ interface DesignStoreState {
   isTransforming: boolean;
   loading: boolean;
   error?: string;
+  environment: string;
   setTableSize: (sizeId: TableSizeId) => void;
   addShape: (kind: ShapeKind, payload?: Partial<NeonShape>) => void;
   updateShape: (id: string, patch: Partial<NeonShape>) => void;
@@ -43,6 +44,7 @@ interface DesignStoreState {
   setTransformMode: (mode: 'translate' | 'rotate' | 'scale') => void;
   setTransforming: (active: boolean) => void;
   setAnimationEnabled: (enabled: boolean) => void;
+  setEnvironment: (environment: string) => void;
   loadDesign: (data: DesignStateData) => void;
   resetDesign: () => void;
   setLoading: (loading: boolean) => void;
@@ -68,6 +70,9 @@ const defaultDesign = (): DesignStateData => ({
   tableSizeId: DEFAULT_TABLE_SIZE_ID,
   performance: 'high'
 });
+
+const DEFAULT_ENVIRONMENT_HDR =
+  'https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/neon_photostudio_1k.hdr';
 
 const clone = <T,>(value: T): T => {
   const plain = isDraft(value) ? (original(value) as T) ?? value : value;
@@ -260,6 +265,7 @@ export const useDesignStore = create<DesignStoreState>()(
     isTransforming: false,
     loading: false,
     error: undefined,
+    environment: DEFAULT_ENVIRONMENT_HDR,
     setTableSize: (sizeId) =>
       set((state) => {
         const currentSizeId = resolveTableSizeId(state.history.present.tableSizeId);
@@ -372,6 +378,10 @@ export const useDesignStore = create<DesignStoreState>()(
         state.performance = mode;
         state.history.present.performance = mode;
       }),
+    setEnvironment: (environment) =>
+      set((state) => {
+        state.environment = environment;
+      }),
     setTransformMode: (mode) =>
       set(() => ({ transformMode: mode })),
     setTransforming: (active) =>
@@ -436,6 +446,7 @@ export const useDesignStore = create<DesignStoreState>()(
           future: []
         };
         state.shapeCounter = 1;
+        state.environment = DEFAULT_ENVIRONMENT_HDR;
       }),
     setLoading: (loading) => set(() => ({ loading })),
     setError: (message) => set(() => ({ error: message })),

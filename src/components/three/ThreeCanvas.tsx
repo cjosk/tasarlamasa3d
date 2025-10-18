@@ -18,13 +18,14 @@ export const ThreeCanvas = () => {
   const { canvasRef } = useDesignContext();
   const design = useDesignStore(selectCurrentDesign);
   const performance = useDesignStore((state) => state.performance);
+  const environment = useDesignStore((state) => state.environment);
   const transformMode = useDesignStore((state) => state.transformMode);
   const tableHeights = useDesignStore(selectTableHeights);
   const tableProfile = useDesignStore(selectTableProfile);
   const shapes = design.shapes;
   const orbitControlsRef = useRef<OrbitControlsImpl | null>(null);
-  const cameraPosition = useMemo(() => [0, 5.5, 9] as const, []);
-  const cameraTarget = useMemo(() => [0, 2, 0] as const, []);
+  const cameraPosition = useMemo(() => [4.6, 4.2, 5] as const, []);
+  const cameraTarget = useMemo(() => [0, 0.1, 0] as const, []);
 
   useEffect(() => {
     if (!orbitControlsRef.current) {
@@ -52,7 +53,7 @@ export const ThreeCanvas = () => {
         <Canvas
           className="pointer-events-auto h-full w-full bg-[#1a1f2b]"
           shadows
-          camera={{ position: [...cameraPosition], fov: 45, near: 0.1, far: 60 }}
+          camera={{ position: [...cameraPosition], fov: 42, near: 0.1, far: 60 }}
           onCreated={({ camera }) => {
             camera.position.set(...cameraPosition);
             camera.lookAt(...cameraTarget);
@@ -104,7 +105,7 @@ export const ThreeCanvas = () => {
               blur={2.8}
               far={10}
             />
-            <Environment preset="city" />
+            <Environment files={environment} background />
             <OrbitControls
               ref={orbitControlsRef}
               target={cameraTarget}
