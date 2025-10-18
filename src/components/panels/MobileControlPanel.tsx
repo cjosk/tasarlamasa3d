@@ -10,6 +10,7 @@ import { NEON_PALETTE } from './ColorPicker';
 import type { CanonicalShapeKind } from '../../types/design';
 import type { TableSizeId } from '../three/layers/tableDimensions';
 import { createNeonCurve } from '../three/neonCurves';
+import { EnvironmentPreviewPanel } from './EnvironmentPreviewPanel';
 
 const POSITION_STEP = 0.05;
 const ROTATION_STEP = Math.PI / 12; // 15°
@@ -277,67 +278,74 @@ export const MobileControlPanel = () => {
   );
 
   return (
-    <div className="flex flex-col gap-4 pb-4">
-      <div className="flex items-center justify-between">
-        <span className="text-[11px] font-semibold uppercase tracking-[0.35em] text-slate-300">Kontroller</span>
-        <button
-          type="button"
-          onClick={() => setLayersOpen((prev) => !prev)}
-          className={clsx(
-            'flex h-10 w-10 items-center justify-center rounded-full border border-slate-700/60 bg-slate-900/80 text-slate-200 transition-colors duration-150 ease-micro',
-            'hover:border-neon-blue/60 hover:text-white active:scale-95'
-          )}
-          aria-expanded={layersOpen}
-          aria-controls="mobile-layer-list"
-          aria-label={layersOpen ? 'Katman listesini gizle' : 'Katman listesini göster'}
-        >
-          <FolderOpen className="h-5 w-5" />
-        </button>
-      </div>
-      {layersOpen && (
-        <div className="relative rounded-2xl border border-slate-800/60 bg-slate-900/70 p-2 shadow-inner">
-          <ul
-            id="mobile-layer-list"
-            ref={layerListRef}
-            className="max-h-40 overflow-y-auto divide-y divide-slate-800/40"
-          >
-            {shapes.length === 0 ? (
-              <li className="py-4 text-center text-xs text-slate-500">Henüz şekil yok. Aşağıdan ekleyin.</li>
-            ) : (
-              shapes.map((shape) => {
-                const isSelected = shape.id === selectedId;
-                const displayName = shape.name ?? shape.label;
-                return (
-                  <li key={shape.id} className="last:border-b-0">
-                    <button
-                      type="button"
-                      onClick={() => selectShape(shape.id)}
-                      className={clsx(
-                        'flex w-full items-center justify-between gap-3 px-3 py-3 text-left text-sm transition',
-                        isSelected
-                          ? 'bg-neon-blue/10 text-white shadow-[0_0_16px_rgba(59,130,246,0.25)]'
-                          : 'text-slate-200 hover:bg-slate-800/70 hover:text-white'
-                      )}
-                    >
-                      <span className="truncate font-semibold uppercase tracking-[0.25em]">{displayName}</span>
-                      <Trash2
-                        className="h-4 w-4 text-slate-500 transition hover:text-rose-400"
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          removeShape(shape.id);
-                        }}
-                      />
-                    </button>
-                  </li>
-                );
-              })
-            )}
-          </ul>
-          {layerHasOverflow && (
-            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-8 rounded-b-2xl bg-gradient-to-t from-slate-900/85 to-transparent" />
-          )}
+    <div className="relative w-full">
+      <div className="pointer-events-none absolute -top-6 left-0 z-30 flex w-full justify-center">
+        <div className="pointer-events-auto w-full">
+          <EnvironmentPreviewPanel />
         </div>
-      )}
+      </div>
+
+      <div className="mt-14 flex flex-col gap-4 pb-4">
+        <div className="flex items-center justify-between">
+          <span className="text-[11px] font-semibold uppercase tracking-[0.35em] text-slate-300">Kontroller</span>
+          <button
+            type="button"
+            onClick={() => setLayersOpen((prev) => !prev)}
+            className={clsx(
+              'flex h-10 w-10 items-center justify-center rounded-full border border-slate-700/60 bg-slate-900/80 text-slate-200 transition-colors duration-150 ease-micro',
+              'hover:border-neon-blue/60 hover:text-white active:scale-95'
+            )}
+            aria-expanded={layersOpen}
+            aria-controls="mobile-layer-list"
+            aria-label={layersOpen ? 'Katman listesini gizle' : 'Katman listesini göster'}
+          >
+            <FolderOpen className="h-5 w-5" />
+          </button>
+        </div>
+        {layersOpen && (
+          <div className="relative rounded-2xl border border-slate-800/60 bg-slate-900/70 p-2 shadow-inner">
+            <ul
+              id="mobile-layer-list"
+              ref={layerListRef}
+              className="max-h-40 overflow-y-auto divide-y divide-slate-800/40"
+            >
+              {shapes.length === 0 ? (
+                <li className="py-4 text-center text-xs text-slate-500">Henüz şekil yok. Aşağıdan ekleyin.</li>
+              ) : (
+                shapes.map((shape) => {
+                  const isSelected = shape.id === selectedId;
+                  const displayName = shape.name ?? shape.label;
+                  return (
+                    <li key={shape.id} className="last:border-b-0">
+                      <button
+                        type="button"
+                        onClick={() => selectShape(shape.id)}
+                        className={clsx(
+                          'flex w-full items-center justify-between gap-3 px-3 py-3 text-left text-sm transition',
+                          isSelected
+                            ? 'bg-neon-blue/10 text-white shadow-[0_0_16px_rgba(59,130,246,0.25)]'
+                            : 'text-slate-200 hover:bg-slate-800/70 hover:text-white'
+                        )}
+                      >
+                        <span className="truncate font-semibold uppercase tracking-[0.25em]">{displayName}</span>
+                        <Trash2
+                          className="h-4 w-4 text-slate-500 transition hover:text-rose-400"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            removeShape(shape.id);
+                          }}
+                        />
+                      </button>
+                    </li>
+                  );
+                })
+              )}
+            </ul>
+            {layerHasOverflow && (
+              <div className="pointer-events-none absolute inset-x-0 bottom-0 h-8 rounded-b-2xl bg-gradient-to-t from-slate-900/85 to-transparent" />
+            )}
+          </div>
+        )}
       <div className="flex items-center justify-center gap-3">
         {movementButtons.map((button) => {
           const glow = (
@@ -494,6 +502,7 @@ export const MobileControlPanel = () => {
         {finishing || exporting ? 'KAYDEDİLİYOR…' : 'TASARIMI BİTİR'}
       </button>
     </div>
+  </div>
   );
 };
 

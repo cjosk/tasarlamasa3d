@@ -24,7 +24,7 @@ export const ThreeCanvas = () => {
   const tableProfile = useDesignStore(selectTableProfile);
   const shapes = design.shapes;
   const orbitControlsRef = useRef<OrbitControlsImpl | null>(null);
-  const cameraPosition = useMemo(() => [4, 3.8, 4.5] as const, []);
+  const cameraPosition = useMemo(() => [4.5, 4, 6] as const, []);
   const cameraTarget = useMemo(() => [0, 0.1, 0] as const, []);
 
   useEffect(() => {
@@ -60,7 +60,7 @@ export const ThreeCanvas = () => {
           }}
           gl={{ alpha: true, antialias: true, preserveDrawingBuffer: true }}
         >
-          <color attach="background" args={[0.05, 0.08, 0.16]} />
+          <color attach="background" args={["#0a0d18"]} />
           <ambientLight intensity={0.35} />
           <hemisphereLight args={[0x4f83ff, 0x08090a, 0.45]} />
           <directionalLight
@@ -108,7 +108,9 @@ export const ThreeCanvas = () => {
             <Environment
               files={environment}
               background
-              ground={{ height: 0, radius: 30, scale: 20 }}
+              ground={{ height: 0, radius: 20, scale: 10 }}
+              resolution={4096}
+              blur={0.3}
             />
             <OrbitControls
               ref={orbitControlsRef}

@@ -69,11 +69,6 @@ export const DesignerPage = () => {
       <div className="md:hidden">
         <div className="flex h-screen flex-col bg-[#0d1117]">
           <div className="relative h-1/2 flex-1 overflow-hidden">
-            <div className="pointer-events-none absolute inset-x-0 top-4 z-30 flex justify-center">
-              <div className="pointer-events-auto">
-                <EnvironmentPreviewPanel />
-              </div>
-            </div>
             <ThreeCanvas />
             <OnboardingGuide />
           </div>
