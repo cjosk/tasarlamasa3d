@@ -14,6 +14,7 @@ import { useSearchParams } from 'react-router-dom';
 import { useFirebase } from '../providers/FirebaseProvider';
 import clsx from 'clsx';
 import { TableSizePanel } from '../components/panels/TableSizePanel';
+import { MobileControlPanel } from '../components/panels/MobileControlPanel';
 
 export const DesignerPage = () => {
   const [searchParams] = useSearchParams();
@@ -74,6 +75,7 @@ export const DesignerPage = () => {
         <GlassControlPanel />
         <PreviewToggle />
       </div>
+      <MobileControlPanel />
       <div className="fixed inset-x-0 bottom-0 z-30 flex items-center justify-between gap-3 bg-slate-950/60 px-4 py-3 backdrop-blur lg:hidden">
         <button
           onClick={() => setSaveOpen(true)}
