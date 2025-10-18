@@ -1,4 +1,4 @@
-import { Canvas } from '@react-three/fiber';
+import { Canvas, useThree } from '@react-three/fiber';
 import { OrbitControls, Environment, ContactShadows, Html } from '@react-three/drei';
 import { Suspense, useEffect, useMemo, useRef } from 'react';
 import { EffectComposer, Bloom } from '@react-three/postprocessing';
@@ -13,7 +13,7 @@ import { GlassSurface } from './layers/GlassSurface';
 import { TableSurface } from './layers/TableSurface';
 import { useDesignContext } from '../../providers/DesignProvider';
 import { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
-import { EquirectangularReflectionMapping } from 'three';
+import * as THREE from 'three';
 
 export const ThreeCanvas = () => {
   const { canvasRef } = useDesignContext();
@@ -120,10 +120,8 @@ export const ThreeCanvas = () => {
               ground={{ height: 0, radius: 15, scale: 8 }}
               resolution={4096}
               blur={0.25}
-              onUpdate={(texture) => {
-                texture.mapping = EquirectangularReflectionMapping;
-              }}
             />
+            <EnvironmentMappingSync environment={environment} />
             <OrbitControls
               ref={orbitControlsRef}
               target={cameraTarget}
@@ -152,4 +150,31 @@ export const ThreeCanvas = () => {
       </div>
     </div>
   );
+};
+
+const EnvironmentMappingSync = ({ environment }: { environment: string }) => {
+  const { scene } = useThree();
+
+  useEffect(() => {
+    let frame: number | null = null;
+
+    const applyMapping = () => {
+      if (scene.environment) {
+        scene.environment.mapping = THREE.EquirectangularReflectionMapping;
+        frame = null;
+        return;
+      }
+      frame = requestAnimationFrame(applyMapping);
+    };
+
+    applyMapping();
+
+    return () => {
+      if (frame !== null) {
+        cancelAnimationFrame(frame);
+      }
+    };
+  }, [environment, scene]);
+
+  return null;
 };

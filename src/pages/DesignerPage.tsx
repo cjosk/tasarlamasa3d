@@ -70,8 +70,8 @@ export const DesignerPage = () => {
         <div className="flex h-screen flex-col bg-[#0d1117]">
           <div className="relative basis-1/2 flex-1 overflow-hidden">
             <ThreeCanvas />
-            <div className="pointer-events-none absolute inset-x-0 bottom-4 z-30 flex justify-center">
-              <div className="pointer-events-auto w-full max-w-[92%]">
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 -translate-y-1/2 z-30 flex justify-center">
+              <div className="pointer-events-auto w-full max-w-[90%]">
                 <EnvironmentPreviewPanel />
               </div>
             </div>
