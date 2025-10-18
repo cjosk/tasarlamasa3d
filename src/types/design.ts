@@ -1,11 +1,19 @@
 import type { Vector3Tuple } from 'three';
 import type { TableSizeId } from '../components/three/layers/tableDimensions';
 
-export type ShapeKind = 'v_shape' | 'single_peak' | 'zigzag_m' | 'text' | 'svg';
+export type CanonicalShapeKind = 'v_shape' | 'single_peak' | 'zigzag_m' | 'text' | 'svg';
+
+export type ShapeKind =
+  | CanonicalShapeKind
+  | 'line'
+  | 'circle'
+  | 'vshape'
+  | 'peak'
+  | 'zigzag';
 
 export interface NeonShape {
   id: string;
-  kind: ShapeKind;
+  kind: CanonicalShapeKind;
   label: string;
   color: string;
   intensity: number;

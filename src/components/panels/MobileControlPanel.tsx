@@ -9,18 +9,19 @@ import {
 } from '../../state/designStore';
 import { useDesignContext } from '../../providers/DesignProvider';
 import { NEON_PALETTE } from './ColorPicker';
+import type { ShapeKind } from '../../types/design';
 
 const POSITION_STEP = 0.05;
 const ROTATION_STEP = (2 * Math.PI) / 180; // ≈2°
 const HOLD_INTERVAL_MS = 70;
 
 const SHAPE_OPTIONS = [
-  { kind: 'v_shape', label: 'V SHAPE' as const },
-  { kind: 'single_peak', label: 'PEAK' as const },
-  { kind: 'zigzag_m', label: 'ZIGZAG' as const },
-  { kind: 'text', label: 'TEXT' as const },
-  { kind: 'svg', label: 'SVG' as const }
-];
+  { kind: 'v_shape', label: 'V SHAPE' },
+  { kind: 'single_peak', label: 'PEAK' },
+  { kind: 'zigzag_m', label: 'ZIGZAG' },
+  { kind: 'text', label: 'TEXT' },
+  { kind: 'svg', label: 'SVG' }
+] as const satisfies readonly { kind: ShapeKind; label: string }[];
 
 type ShapeOption = (typeof SHAPE_OPTIONS)[number];
 

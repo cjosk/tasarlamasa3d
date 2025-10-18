@@ -3,7 +3,13 @@ import { immer } from 'zustand/middleware/immer';
 import { isDraft, original } from 'immer';
 import { nanoid } from '../utils/nanoid';
 import type { Vector3Tuple } from 'three';
-import { DesignStateData, GlassSettings, NeonShape, ShapeKind } from '../types/design';
+import {
+  CanonicalShapeKind,
+  DesignStateData,
+  GlassSettings,
+  NeonShape,
+  ShapeKind
+} from '../types/design';
 import {
   DEFAULT_TABLE_SIZE_ID,
   getTableHeights,
@@ -81,7 +87,20 @@ const pushHistory = (state: DesignStoreState['history'], next: DesignStateData) 
   state.future = [];
 };
 
-const LABEL_PRESETS: Record<ShapeKind, string> = {
+const KIND_ALIASES: Record<ShapeKind, CanonicalShapeKind> = {
+  v_shape: 'v_shape',
+  single_peak: 'single_peak',
+  zigzag_m: 'zigzag_m',
+  text: 'text',
+  svg: 'svg',
+  vshape: 'v_shape',
+  peak: 'single_peak',
+  zigzag: 'zigzag_m',
+  line: 'v_shape',
+  circle: 'single_peak'
+};
+
+const LABEL_PRESETS: Record<CanonicalShapeKind, string> = {
   v_shape: 'V Stroke',
   single_peak: 'Peak',
   zigzag_m: 'Zigzag',
@@ -120,11 +139,14 @@ const sanitizeShape = (shape: NeonShape, tableSizeId: TableSizeId): NeonShape =>
   rotation: constrainRotation(shape.rotation)
 });
 
+const normalizeKind = (kind: ShapeKind): CanonicalShapeKind => KIND_ALIASES[kind] ?? 'v_shape';
+
 const createShape = (kind: ShapeKind, payload?: Partial<NeonShape>): NeonShape => {
+  const canonicalKind = normalizeKind(kind);
   const base: NeonShape = {
     id: nanoid(),
-    kind,
-    label: `${LABEL_PRESETS[kind]} #${Math.floor(Math.random() * 900 + 100)}`,
+    kind: canonicalKind,
+    label: `${LABEL_PRESETS[canonicalKind]} #${Math.floor(Math.random() * 900 + 100)}`,
     color: '#52B9FF',
     intensity: 2.4,
     thickness: NEON_THICKNESS,
@@ -135,7 +157,9 @@ const createShape = (kind: ShapeKind, payload?: Partial<NeonShape>): NeonShape =
     animated: true
   };
 
-  return { ...base, ...payload };
+  const { kind: _ignoredKind, ...restPayload } = payload ?? {};
+
+  return { ...base, ...restPayload };
 };
 
 export const useDesignStore = create<DesignStoreState>()(

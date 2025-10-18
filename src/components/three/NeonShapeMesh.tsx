@@ -330,9 +330,9 @@ interface SvgShapeProps {
 const SvgShape = ({ path, material }: SvgShapeProps) => {
   const group = useRef<Group | null>(null);
 
-  const shapes = useMemo(() => {
+  const { shapes, offsetY } = useMemo(() => {
     if (!path) {
-      return [] as Shape[];
+      return { shapes: [] as Shape[], offsetY: 0 };
     }
     const loader = new SVGLoader();
     const data = loader.parse(path);
@@ -346,17 +346,15 @@ const SvgShape = ({ path, material }: SvgShapeProps) => {
       });
     });
 
-    if (Number.isFinite(minY)) {
-      svgShapes.forEach((shape) => shape.translate(0, -minY));
-    }
+    const offset = Number.isFinite(minY) ? -minY : 0;
 
-    return svgShapes;
+    return { shapes: svgShapes, offsetY: offset };
   }, [path]);
 
   return (
     <group ref={group} scale={0.008} position={[0, 0, 0]}>
       {shapes.map((shape, index) => (
-        <mesh key={index} position={[0, 0, 0]}>
+        <mesh key={index} position={[0, offsetY, 0]}>
           <shapeGeometry args={[shape]} />
           <primitive object={material} attach="material" />
         </mesh>
