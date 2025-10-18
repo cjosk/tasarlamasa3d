@@ -60,13 +60,13 @@ export const DesignerPage = () => {
           <PreviewToggle />
         </div>
       </div>
-      <div className="relative flex flex-1 flex-col md:hidden">
-        <div className="fixed top-0 left-0 right-0 h-[60vh] bg-[#0D1117] flex items-center justify-center">
-          <ThreeCanvas />
-          <OnboardingGuide />
-        </div>
-        <div className="absolute top-[60vh] bottom-0 left-0 right-0">
-          <div className="h-full overflow-y-auto rounded-t-3xl border-t border-slate-800 bg-slate-900/80 px-4 pb-4 pt-0 shadow-lg shadow-slate-900/60 backdrop-blur-2xl">
+      <div className="md:hidden">
+        <div className="flex h-screen flex-col bg-[#0d1117]">
+          <div className="relative h-1/2 flex-1 overflow-hidden">
+            <ThreeCanvas />
+            <OnboardingGuide />
+          </div>
+          <div className="h-1/2 flex-1 overflow-y-auto border-t border-slate-800 bg-slate-900/85 px-4 pb-6 pt-0 shadow-lg shadow-slate-900/60 backdrop-blur-2xl">
             <MobileControlPanel />
           </div>
         </div>

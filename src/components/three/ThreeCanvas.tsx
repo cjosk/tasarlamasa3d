@@ -36,10 +36,10 @@ export const ThreeCanvas = () => {
   );
 
   return (
-    <div className="relative flex h-full w-full items-center justify-center">
+    <div className="relative flex h-full w-full">
       <div
         ref={canvasRef}
-        className="pointer-events-none mx-auto w-[90vw] max-w-[400px] aspect-square overflow-hidden rounded-xl bg-[#1a1f2b]"
+        className="pointer-events-none h-full w-full overflow-hidden bg-[#1a1f2b] md:rounded-3xl"
       >
         <Canvas
           className="pointer-events-auto h-full w-full bg-[#1a1f2b]"
