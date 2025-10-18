@@ -23,8 +23,8 @@ export const ThreeCanvas = () => {
   const tableProfile = useDesignStore(selectTableProfile);
   const shapes = design.shapes;
   const orbitControlsRef = useRef<OrbitControlsImpl | null>(null);
-  const cameraPosition = useMemo(() => [0, 20, 55] as const, []);
-  const cameraTarget = useMemo(() => [0, 12, 0] as const, []);
+  const cameraPosition = useMemo(() => [0, 12, 45] as const, []);
+  const cameraTarget = useMemo(() => [0, 10, 0] as const, []);
 
   const bloomConfig = useMemo(
     () => ({
@@ -36,85 +36,90 @@ export const ThreeCanvas = () => {
   );
 
   return (
-    <div ref={canvasRef} className="relative h-full w-full pointer-events-none">
-      <Canvas
-        className="pointer-events-auto"
-        shadows
-        camera={{ position: [...cameraPosition], fov: 38, near: 0.1, far: 160 }}
-        onCreated={({ camera }) => {
-          camera.position.set(...cameraPosition);
-          camera.lookAt(...cameraTarget);
-        }}
-        gl={{ alpha: true, antialias: true, preserveDrawingBuffer: true }}
+    <div className="relative flex h-full w-full items-center justify-center">
+      <div
+        ref={canvasRef}
+        className="pointer-events-none mx-auto w-[90vw] max-w-[400px] aspect-square overflow-hidden rounded-xl bg-[#1a1f2b]"
       >
-        <color attach="background" args={[0.05, 0.08, 0.16]} />
-        <ambientLight intensity={0.35} />
-        <hemisphereLight args={[0x4f83ff, 0x08090a, 0.45]} />
-        <directionalLight
-          position={[6, 8, 5]}
-          intensity={0.65}
-          castShadow
-          shadow-mapSize-width={2048}
-          shadow-mapSize-height={2048}
-        />
-        <spotLight
-          position={[-3, 7, -4]}
-          angle={Math.PI / 6}
-          intensity={1}
-          penumbra={0.4}
-          castShadow
-        />
-        <Suspense
-          fallback={
-            <Html center>
-              <div className="rounded-full border border-slate-700/80 bg-slate-900/80 px-4 py-2 text-xs text-slate-400">
-                Loading scene…
-              </div>
-            </Html>
-          }
+        <Canvas
+          className="pointer-events-auto h-full w-full bg-[#1a1f2b]"
+          shadows
+          camera={{ position: [...cameraPosition], fov: 35, near: 0.1, far: 160 }}
+          onCreated={({ camera }) => {
+            camera.position.set(...cameraPosition);
+            camera.lookAt(...cameraTarget);
+          }}
+          gl={{ alpha: true, antialias: true, preserveDrawingBuffer: true }}
         >
-          <group position={[0, 0, 0]}>
-            <TableSurface />
-            {design.glass.enabled && <GlassSurface glass={design.glass} />}
-            {shapes.map((shape) => (
-              <NeonShapeMesh
-                key={shape.id}
-                shape={shape}
-                transformMode={transformMode}
-                orbitControlsRef={orbitControlsRef}
-              />
-            ))}
-          </group>
-          <ContactShadows
-            position={[0, tableHeights.groundY - 0.02, 0]}
-            opacity={0.55}
-            scale={Math.max(tableProfile.width, tableProfile.depth) * 6}
-            blur={2.8}
-            far={10}
+          <color attach="background" args={[0.05, 0.08, 0.16]} />
+          <ambientLight intensity={0.35} />
+          <hemisphereLight args={[0x4f83ff, 0x08090a, 0.45]} />
+          <directionalLight
+            position={[6, 8, 5]}
+            intensity={0.65}
+            castShadow
+            shadow-mapSize-width={2048}
+            shadow-mapSize-height={2048}
           />
-          <Environment preset="city" />
-          <OrbitControls
-            ref={orbitControlsRef}
-            target={cameraTarget}
-            enablePan={false}
-            minPolarAngle={Math.PI / 5}
-            maxPolarAngle={(2 * Math.PI) / 3}
-            minDistance={8}
-            maxDistance={18}
-            enableDamping
-            dampingFactor={0.1}
+          <spotLight
+            position={[-3, 7, -4]}
+            angle={Math.PI / 6}
+            intensity={1}
+            penumbra={0.4}
+            castShadow
           />
-          {performance === 'high' && (
-            <EffectComposer multisampling={4} autoClear>
-              <Bloom
-                intensity={bloomConfig.intensity}
-                luminanceThreshold={bloomConfig.luminanceThreshold}
-                luminanceSmoothing={bloomConfig.luminanceSmoothing}
-              />
-            </EffectComposer>
-          )}
-        </Suspense>
-      </Canvas>
+          <Suspense
+            fallback={
+              <Html center>
+                <div className="rounded-full border border-slate-700/80 bg-slate-900/80 px-4 py-2 text-xs text-slate-400">
+                  Loading scene…
+                </div>
+              </Html>
+            }
+          >
+            <group position={[0, 0, 0]}>
+              <TableSurface />
+              {design.glass.enabled && <GlassSurface glass={design.glass} />}
+              {shapes.map((shape) => (
+                <NeonShapeMesh
+                  key={shape.id}
+                  shape={shape}
+                  transformMode={transformMode}
+                  orbitControlsRef={orbitControlsRef}
+                />
+              ))}
+            </group>
+            <ContactShadows
+              position={[0, tableHeights.groundY - 0.02, 0]}
+              opacity={0.55}
+              scale={Math.max(tableProfile.width, tableProfile.depth) * 6}
+              blur={2.8}
+              far={10}
+            />
+            <Environment preset="city" />
+            <OrbitControls
+              ref={orbitControlsRef}
+              target={cameraTarget}
+              enablePan={false}
+              minPolarAngle={Math.PI / 5}
+              maxPolarAngle={(2 * Math.PI) / 3}
+              minDistance={8}
+              maxDistance={18}
+              enableDamping
+              dampingFactor={0.1}
+            />
+            {performance === 'high' && (
+              <EffectComposer multisampling={4} autoClear>
+                <Bloom
+                  intensity={bloomConfig.intensity}
+                  luminanceThreshold={bloomConfig.luminanceThreshold}
+                  luminanceSmoothing={bloomConfig.luminanceSmoothing}
+                />
+              </EffectComposer>
+            )}
+          </Suspense>
+        </Canvas>
+      </div>
     </div>
   );
 };

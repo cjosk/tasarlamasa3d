@@ -61,7 +61,7 @@ export const DesignerPage = () => {
         </div>
       </div>
       <div className="relative flex flex-1 flex-col md:hidden">
-        <div className="fixed top-0 left-0 right-0 h-[60vh] bg-[#0D1117]">
+        <div className="fixed top-0 left-0 right-0 h-[60vh] bg-[#0D1117] flex items-center justify-center">
           <ThreeCanvas />
           <OnboardingGuide />
         </div>
