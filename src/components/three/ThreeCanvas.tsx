@@ -13,6 +13,7 @@ import { GlassSurface } from './layers/GlassSurface';
 import { TableSurface } from './layers/TableSurface';
 import { useDesignContext } from '../../providers/DesignProvider';
 import { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
+import { EquirectangularReflectionMapping } from 'three';
 
 export const ThreeCanvas = () => {
   const { canvasRef } = useDesignContext();
@@ -24,8 +25,8 @@ export const ThreeCanvas = () => {
   const tableProfile = useDesignStore(selectTableProfile);
   const shapes = design.shapes;
   const orbitControlsRef = useRef<OrbitControlsImpl | null>(null);
-  const cameraPosition = useMemo(() => [4.5, 4, 6] as const, []);
-  const cameraTarget = useMemo(() => [0, 0.1, 0] as const, []);
+  const cameraPosition = useMemo(() => [4, 3.5, 5] as const, []);
+  const cameraTarget = useMemo(() => [0, tableHeights.neonSurfaceY * 0.6, 0] as const, [tableHeights.neonSurfaceY]);
 
   useEffect(() => {
     if (!orbitControlsRef.current) {
@@ -105,12 +106,23 @@ export const ThreeCanvas = () => {
               blur={2.8}
               far={10}
             />
+            <mesh
+              rotation={[-Math.PI / 2, 0, 0]}
+              position={[0, tableHeights.groundY + 0.0001, 0]}
+              receiveShadow
+            >
+              <planeGeometry args={[10, 10]} />
+              <shadowMaterial transparent opacity={0.3} />
+            </mesh>
             <Environment
               files={environment}
               background
-              ground={{ height: 0, radius: 20, scale: 10 }}
+              ground={{ height: 0, radius: 15, scale: 8 }}
               resolution={4096}
-              blur={0.3}
+              blur={0.25}
+              onUpdate={(texture) => {
+                texture.mapping = EquirectangularReflectionMapping;
+              }}
             />
             <OrbitControls
               ref={orbitControlsRef}
