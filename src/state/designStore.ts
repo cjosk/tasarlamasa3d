@@ -136,7 +136,9 @@ const sanitizeShape = (shape: NeonShape, tableSizeId: TableSizeId): NeonShape =>
   ...shape,
   thickness: NEON_THICKNESS,
   position: constrainPosition(shape.position, tableSizeId),
-  rotation: constrainRotation(shape.rotation)
+  rotation: constrainRotation(shape.rotation),
+  glowRadius: 1,
+  intensity: 1
 });
 
 const normalizeKind = (kind: ShapeKind): CanonicalShapeKind => KIND_ALIASES[kind] ?? 'v_shape';
@@ -148,9 +150,9 @@ const createShape = (kind: ShapeKind, payload?: Partial<NeonShape>): NeonShape =
     kind: canonicalKind,
     label: `${LABEL_PRESETS[canonicalKind]} #${Math.floor(Math.random() * 900 + 100)}`,
     color: '#52B9FF',
-    intensity: 2.4,
+    intensity: 1,
     thickness: NEON_THICKNESS,
-    glowRadius: 0.8,
+    glowRadius: 1,
     position: [0, 0, 0],
     rotation: [0, 0, 0],
     scale: [1, 1, 1],

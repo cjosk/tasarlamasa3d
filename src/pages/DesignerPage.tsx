@@ -2,7 +2,6 @@ import { useEffect, useMemo } from 'react';
 import { Toolbar } from '../components/toolbar/Toolbar';
 import { ThreeCanvas } from '../components/three/ThreeCanvas';
 import { ShapePanel } from '../components/panels/ShapePanel';
-import { InspectorPanel } from '../components/panels/InspectorPanel';
 import { GlassControlPanel } from '../components/panels/GlassControlPanel';
 import { PreviewToggle } from '../components/panels/PreviewToggle';
 import { OnboardingGuide } from '../components/ui/OnboardingGuide';
@@ -31,8 +30,8 @@ export const DesignerPage = () => {
   const showStatus = useMemo(() => loading || Boolean(error), [error, loading]);
 
   return (
-    <div className="relative flex min-h-[calc(100vh-5rem)] flex-col">
-      <div className="relative z-30 px-4 pt-4">
+    <div className="relative flex min-h-screen flex-col">
+      <div className="relative z-30 hidden px-4 pt-4 md:block">
         <Toolbar />
       </div>
       {showStatus && (
@@ -41,8 +40,8 @@ export const DesignerPage = () => {
           {error && <span className="text-rose-400">{error}</span>}
         </div>
       )}
-      <div className="hidden flex-1 gap-4 px-4 pb-6 pt-4 lg:grid lg:grid-cols-[280px_minmax(0,1fr)_280px]">
-        <div className="hidden lg:block">
+      <div className="hidden flex-1 gap-4 px-4 pb-6 pt-4 md:grid md:grid-cols-[280px_minmax(0,1fr)_280px]">
+        <div className="hidden md:block">
           <ShapePanel />
         </div>
         <div className="relative flex min-h-[400px] flex-col overflow-hidden rounded-3xl border border-slate-800/80 bg-slate-900/70 shadow-panel">
@@ -55,38 +54,21 @@ export const DesignerPage = () => {
           </div>
           <OnboardingGuide />
         </div>
-        <div className="hidden gap-4 lg:flex lg:flex-col">
+        <div className="hidden gap-4 md:flex md:flex-col">
           <TableSizePanel />
-          <InspectorPanel />
           <GlassControlPanel />
           <PreviewToggle />
         </div>
       </div>
-      <div className="lg:hidden flex flex-1 flex-col overflow-hidden pb-[45vh]">
-        <div className="px-3 pt-1 pb-1">
-          <div className="relative h-[55vh] overflow-hidden rounded-3xl border border-slate-800/80 bg-slate-900/70 shadow-panel">
-            <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex justify-between px-4 py-3 text-xs text-slate-400">
-              <span>{design.title}</span>
-              <span>{authUser?.displayName ?? 'Designer'}</span>
-            </div>
-            <ThreeCanvas />
-            <OnboardingGuide />
-          </div>
+      <div className="relative flex flex-1 flex-col md:hidden">
+        <div className="fixed top-0 left-0 right-0 aspect-square bg-[#0D1117]">
+          <ThreeCanvas />
+          <OnboardingGuide />
         </div>
-      </div>
-      <div className="pointer-events-none lg:hidden">
-        <div className="pointer-events-auto fixed inset-x-0 bottom-0 z-40">
-          <div className="mx-auto w-full max-w-xl rounded-t-3xl border-t border-slate-800/60 bg-slate-900/70 shadow-2xl shadow-slate-900/40 backdrop-blur-xl">
-            <div className="max-h-[45vh] overflow-y-auto px-4 pt-4 pb-8 space-y-6">
-              <MobileControlPanel />
-              <div className="space-y-4 pb-6">
-                <ShapePanel />
-                <TableSizePanel />
-                <InspectorPanel />
-                <GlassControlPanel />
-                <PreviewToggle />
-              </div>
-            </div>
+        <div className="pt-[100vw]" aria-hidden />
+        <div className="pointer-events-none">
+          <div className="pointer-events-auto absolute bottom-0 w-full bg-slate-900/80 backdrop-blur-2xl rounded-t-3xl border-t border-slate-800 p-4 shadow-lg max-h-[30vh] overflow-y-auto">
+            <MobileControlPanel />
           </div>
         </div>
       </div>

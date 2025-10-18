@@ -34,7 +34,7 @@ export const ThreeCanvas = () => {
   );
 
   return (
-    <div ref={canvasRef} className="relative h-full w-full pt-1 pb-1 sm:pt-0 sm:pb-0 pointer-events-none">
+    <div ref={canvasRef} className="relative h-full w-full pointer-events-none">
       <Canvas
         className="pointer-events-auto"
         shadows

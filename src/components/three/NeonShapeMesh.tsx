@@ -28,6 +28,8 @@ const getColor = (color: string, intensity: number) => {
     emissiveIntensity: intensity,
     toneMapped: false
   });
+  (material as any).glowRadius = 1;
+  (material as any).glowIntensity = 1;
   return material;
 };
 
