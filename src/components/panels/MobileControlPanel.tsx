@@ -258,27 +258,21 @@ export const MobileControlPanel = () => {
 
   const finishDisabled = finishing || exporting || !canvasRef.current;
 
-  const MOBILE_TABLE_SIZES: readonly { id: TableSizeId; label: string; helperIds?: readonly TableSizeId[] }[] = useMemo(
+  const MOBILE_TABLE_SIZES: readonly { id: TableSizeId; label: string }[] = useMemo(
     () => [
-      { id: '70x45x50', label: 'Küçük' },
-      { id: '90x45x50', label: 'Orta', helperIds: ['120x80x50'] },
-      { id: '150x80x50', label: 'Büyük' }
+      { id: '70x45x50', label: 'S' },
+      { id: '90x45x50', label: 'M' },
+      { id: '120x80x50', label: 'L' },
+      { id: '150x80x50', label: 'XL' }
     ],
     []
   );
 
   const handleTableSizePress = useCallback(
     (option: (typeof MOBILE_TABLE_SIZES)[number]) => {
-      if (option.helperIds && option.helperIds.length > 0) {
-        const cycle = [option.id, ...option.helperIds];
-        const currentIndex = tableSizeId && cycle.includes(tableSizeId) ? cycle.indexOf(tableSizeId) : -1;
-        const nextId = currentIndex >= 0 ? cycle[(currentIndex + 1) % cycle.length] : option.id;
-        setTableSize(nextId);
-        return;
-      }
       setTableSize(option.id);
     },
-    [setTableSize, tableSizeId, MOBILE_TABLE_SIZES]
+    [setTableSize]
   );
 
   const movementButtons = useMemo<readonly MovementButton[]>(
@@ -437,50 +431,52 @@ export const MobileControlPanel = () => {
           </button>
         ))}
       </div>
-      <div className="flex flex-wrap items-center justify-center gap-3">
-        {NEON_PALETTE.map((color) => {
-          const isActive = selectedShape?.color?.toLowerCase() === color.toLowerCase();
-          const glowShadow = `0 0 12px ${color}80, 0 0 24px ${color}40`;
-          return (
-            <button
-              key={color}
-              type="button"
-              onClick={() => applyColor(color)}
-              disabled={!selectedId}
-              style={{
-                backgroundColor: color,
-                boxShadow: isActive
-                  ? `${glowShadow}, 0 0 0 4px rgba(15,23,42,0.9), 0 0 0 6px ${color}`
-                  : glowShadow
-              }}
-              className={clsx(
-                'group h-12 w-12 rounded-full transition-transform duration-150 ease-micro',
-                'hover:scale-105 active:scale-95',
-                'disabled:cursor-not-allowed disabled:opacity-40'
-              )}
-              aria-label={`Rengi ${color} yap`}
-            >
-              <span className="pointer-events-none block h-full w-full rounded-full opacity-0 transition group-active:animate-ping group-active:opacity-70" />
-            </button>
-          );
-        })}
+      <div className="mt-2 flex justify-center">
+        <div className="flex max-w-full flex-nowrap items-center justify-center gap-3 overflow-x-auto px-1">
+          {NEON_PALETTE.map((color) => {
+            const isActive = selectedShape?.color?.toLowerCase() === color.toLowerCase();
+            const glowShadow = `0 0 12px ${color}80, 0 0 24px ${color}40`;
+            return (
+              <button
+                key={color}
+                type="button"
+                onClick={() => applyColor(color)}
+                disabled={!selectedId}
+                style={{
+                  backgroundColor: color,
+                  boxShadow: isActive
+                    ? `${glowShadow}, 0 0 0 3px rgba(15,23,42,0.95), 0 0 0 5px ${color}`
+                    : glowShadow
+                }}
+                className={clsx(
+                  'group h-10 w-10 rounded-full border-2 transition-transform duration-150 ease-micro',
+                  isActive ? 'border-neon-pink/80' : 'border-transparent',
+                  'hover:scale-105 active:scale-95',
+                  'disabled:cursor-not-allowed disabled:opacity-40'
+                )}
+                aria-label={`Rengi ${color} yap`}
+              >
+                <span className="pointer-events-none block h-full w-full rounded-full opacity-0 transition group-active:animate-ping group-active:opacity-70" />
+              </button>
+            );
+          })}
+        </div>
       </div>
-      <div className="flex flex-col gap-2">
-        <span className="text-center text-[11px] uppercase tracking-[0.3em] text-slate-400">Masa Boyutu</span>
-        <div className="flex justify-center gap-2">
+      <div className="mt-4 flex flex-col gap-3">
+        <span className="text-center text-[11px] uppercase tracking-[0.3em] text-slate-400">MASA BOYUTU</span>
+        <div className="flex justify-center gap-3">
           {MOBILE_TABLE_SIZES.map((option) => {
-            const matchesCurrent =
-              tableSizeId === option.id || (tableSizeId ? option.helperIds?.includes(tableSizeId) : false);
+            const matchesCurrent = tableSizeId === option.id;
             return (
               <button
                 key={option.id}
                 type="button"
                 onClick={() => handleTableSizePress(option)}
                 className={clsx(
-                  'px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] transition',
+                  'px-4 py-2 text-sm font-semibold uppercase tracking-[0.25em] transition-colors duration-150',
                   'rounded-full border backdrop-blur-md',
                   matchesCurrent
-                    ? 'border-neon-pink/80 bg-neon-pink/30 text-white shadow-[0_0_22px_rgba(236,72,153,0.35)]'
+                    ? 'border-neon-pink/80 bg-neon-pink/40 text-white shadow-[0_0_20px_rgba(236,72,153,0.35)]'
                     : 'border-slate-700/70 text-slate-300 hover:border-neon-blue/60 hover:text-white'
                 )}
               >
