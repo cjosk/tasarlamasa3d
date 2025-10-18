@@ -105,47 +105,46 @@ export const NeonShapeMesh = ({ shape, transformMode, orbitControlsRef }: NeonSh
     const controls = transformRef.current;
     if (!controls) return;
 
-    const handleMouseDown = (event: { stopPropagation?: () => void }) => {
-      event.stopPropagation?.();
+    const handleDragChange = (event: any) => {
+      const isDragging = Boolean(event?.value);
+      setTransforming(isDragging);
+      if (orbitControlsRef.current) {
+        orbitControlsRef.current.enabled = !isDragging;
+      }
+    };
+
+    const handleDragStart = () => {
       setTransforming(true);
       if (orbitControlsRef.current) {
         orbitControlsRef.current.enabled = false;
       }
     };
 
-    const handleMouseUp = (event: { stopPropagation?: () => void }) => {
-      event.stopPropagation?.();
+    const handleDragEnd = () => {
       setTransforming(false);
       if (orbitControlsRef.current) {
         orbitControlsRef.current.enabled = true;
       }
     };
 
-    const handleDraggingChanged = (event: { value: boolean }) => {
-      setTransforming(event.value);
-      if (orbitControlsRef.current) {
-        orbitControlsRef.current.enabled = !event.value;
-      }
-    };
-
-    controls.addEventListener('mouseDown', handleMouseDown);
-    controls.addEventListener('mouseUp', handleMouseUp);
-    controls.addEventListener('touchStart', handleMouseDown);
-    controls.addEventListener('touchEnd', handleMouseUp);
-    controls.addEventListener('dragging-changed', handleDraggingChanged);
+    (controls as any).addEventListener('dragging-changed', handleDragChange);
+    (controls as any).addEventListener('mouseDown', handleDragStart);
+    (controls as any).addEventListener('mouseUp', handleDragEnd);
+    (controls as any).addEventListener('touchStart', handleDragStart);
+    (controls as any).addEventListener('touchEnd', handleDragEnd);
 
     return () => {
-      controls.removeEventListener('mouseDown', handleMouseDown);
-      controls.removeEventListener('mouseUp', handleMouseUp);
-      controls.removeEventListener('touchStart', handleMouseDown);
-      controls.removeEventListener('touchEnd', handleMouseUp);
-      controls.removeEventListener('dragging-changed', handleDraggingChanged);
+      (controls as any).removeEventListener('dragging-changed', handleDragChange);
+      (controls as any).removeEventListener('mouseDown', handleDragStart);
+      (controls as any).removeEventListener('mouseUp', handleDragEnd);
+      (controls as any).removeEventListener('touchStart', handleDragStart);
+      (controls as any).removeEventListener('touchEnd', handleDragEnd);
       if (orbitControlsRef.current) {
         orbitControlsRef.current.enabled = true;
       }
       setTransforming(false);
     };
-  }, [orbitControlsRef, setTransforming, isSelected, attachedObject]);
+  }, [orbitControlsRef, setTransforming, isSelected]);
 
   useEffect(() => {
     if (!group.current) return;
