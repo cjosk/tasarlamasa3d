@@ -1,5 +1,5 @@
 import { ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { FolderOpen, MoveDown, MoveLeft, MoveRight, MoveUp, RotateCw, Trash2 } from 'lucide-react';
+import { FolderOpen, MoveDown, MoveLeft, MoveRight, MoveUp, RotateCw, Shapes, Trash2 } from 'lucide-react';
 import clsx from 'clsx';
 import { Canvas } from '@react-three/fiber';
 import type { Vector3Tuple } from 'three';
@@ -284,37 +284,13 @@ export const MobileControlPanel = () => {
   );
 
   return (
-    <div className="flex flex-col gap-4 pb-4">
-      <div className="flex flex-col items-center gap-2">
-        <span className="text-[11px] font-semibold uppercase tracking-[0.35em] text-slate-300">Renkler</span>
-        <div className="flex flex-nowrap items-center justify-center gap-2">
-          {NEON_PALETTE.map((color) => {
-            const isActive = selectedShape?.color?.toLowerCase() === color.toLowerCase();
-            return (
-              <button
-                key={color}
-                type="button"
-                onClick={() => applyColor(color)}
-                disabled={!selectedId}
-                style={{ backgroundColor: color }}
-                className={clsx(
-                  'h-8 w-8 flex-shrink-0 rounded-full border transition-transform duration-150 ease-micro',
-                  isActive ? 'border-neon-pink/80' : 'border-slate-700/70',
-                  'hover:scale-105 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:scale-100'
-                )}
-                aria-label={`Rengi ${color} yap`}
-                aria-pressed={isActive}
-              />
-            );
-          })}
-        </div>
-      </div>
+    <div className="flex flex-col gap-3 pb-4">
       <div className="flex items-center justify-between">
         <span className="text-[11px] font-semibold uppercase tracking-[0.35em] text-slate-300">Kontroller</span>
-      <button
-        type="button"
-        onClick={() => setLayersOpen((prev) => !prev)}
-        className={clsx(
+        <button
+          type="button"
+          onClick={() => setLayersOpen((prev) => !prev)}
+          className={clsx(
             'flex h-10 w-10 items-center justify-center rounded-full border border-slate-700/60 bg-slate-900/80 text-slate-200 transition-colors duration-150 ease-micro',
             'hover:border-neon-blue/60 hover:text-white active:scale-95'
           )}
@@ -429,12 +405,37 @@ export const MobileControlPanel = () => {
           );
         })}
       </div>
+      <div className="mt-4 flex flex-col items-center">
+        <span className="text-[11px] font-semibold uppercase tracking-[0.35em] text-slate-300">Renkler</span>
+        <div className="mt-4 mb-4 flex flex-nowrap items-center justify-center gap-2">
+          {NEON_PALETTE.map((color) => {
+            const isActive = selectedShape?.color?.toLowerCase() === color.toLowerCase();
+            return (
+              <button
+                key={color}
+                type="button"
+                onClick={() => applyColor(color)}
+                disabled={!selectedId}
+                style={{ backgroundColor: color }}
+                className={clsx(
+                  'h-8 w-8 flex-shrink-0 rounded-full border transition-transform duration-150 ease-micro',
+                  isActive ? 'border-neon-pink/80' : 'border-slate-700/70',
+                  'hover:scale-105 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:scale-100'
+                )}
+                aria-label={`Rengi ${color} yap`}
+                aria-pressed={isActive}
+              />
+            );
+          })}
+        </div>
+      </div>
       <button
         type="button"
         onClick={() => setLibraryOpen((prev) => !prev)}
-        className="w-full rounded-2xl bg-slate-800/80 border border-slate-700 text-slate-200 text-sm font-semibold py-3 transition hover:bg-slate-700"
+        className="flex w-full items-center justify-center gap-2 rounded-2xl border border-slate-700 bg-slate-800/80 py-3 text-sm font-semibold text-slate-200 transition hover:bg-slate-700"
         aria-expanded={libraryOpen}
       >
+        <Shapes className="h-4 w-4" />
         Şekil Kütüphanesi
       </button>
       <div
@@ -444,7 +445,7 @@ export const MobileControlPanel = () => {
         )}
         aria-hidden={!libraryOpen}
       >
-        <div className="mt-2 grid grid-cols-4 justify-center gap-2">
+        <div className="grid grid-cols-4 justify-center gap-2 pt-2 pb-2">
           {SHAPE_OPTIONS.map((option) => {
             const isActive = selectedShape?.kind === option.kind;
             return (
@@ -468,7 +469,7 @@ export const MobileControlPanel = () => {
       </div>
       <div className="flex flex-col gap-2">
         <span className="text-center text-[11px] uppercase tracking-[0.3em] text-slate-400">Masa Boyutu</span>
-        <div className="grid grid-cols-4 gap-2">
+        <div className="grid grid-cols-4 gap-2 mt-4">
           {MOBILE_TABLE_SIZES.map((option) => {
             const matchesCurrent = tableSizeId === option.id;
             return (
@@ -477,10 +478,8 @@ export const MobileControlPanel = () => {
                 type="button"
                 onClick={() => handleTableSizePress(option)}
                 className={clsx(
-                  'rounded-full px-3 py-2 text-xs font-semibold uppercase tracking-[0.18em] transition-colors duration-150',
-                  matchesCurrent
-                    ? 'bg-neon-pink text-white shadow-[0_0_16px_rgba(236,72,153,0.45)]'
-                    : 'bg-slate-800/80 text-slate-300 border border-slate-700 hover:border-neon-blue/60 hover:text-white'
+                  'flex items-center justify-center rounded-xl border border-slate-700 bg-slate-800/80 py-2 text-[0.55rem] font-semibold uppercase tracking-[0.18em] text-slate-300 transition hover:bg-slate-700 active:scale-95',
+                  matchesCurrent && 'bg-neon-pink text-white shadow-[0_0_16px_rgba(236,72,153,0.45)]'
                 )}
               >
                 {option.label} EBAT
