@@ -1,6 +1,5 @@
 import { useEffect, useMemo } from 'react';
 import { Toolbar } from '../components/toolbar/Toolbar';
-import { ShapeDropdown } from '../components/toolbar/ShapeDropdown';
 import { ThreeCanvas } from '../components/three/ThreeCanvas';
 import { ShapePanel } from '../components/panels/ShapePanel';
 import { InspectorPanel } from '../components/panels/InspectorPanel';
@@ -63,14 +62,13 @@ export const DesignerPage = () => {
           <PreviewToggle />
         </div>
       </div>
-      <div className="space-y-4 px-4 pb-28 lg:hidden">
+      <div className="space-y-4 px-4 pb-[18rem] lg:hidden">
         <ShapePanel />
         <TableSizePanel />
         <InspectorPanel />
         <GlassControlPanel />
         <PreviewToggle />
       </div>
-      <ShapeDropdown />
       <MobileControlPanel />
     </div>
   );

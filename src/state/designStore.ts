@@ -111,7 +111,7 @@ const constrainPosition = (position: Vector3Tuple, tableSizeId: TableSizeId): Ve
   ] as Vector3Tuple;
 };
 
-const constrainRotation = (rotation: Vector3Tuple): Vector3Tuple => [0, rotation[1], 0];
+const constrainRotation = (rotation: Vector3Tuple): Vector3Tuple => [Math.PI, rotation[1], 0];
 
 const sanitizeShape = (shape: NeonShape, tableSizeId: TableSizeId): NeonShape => ({
   ...shape,

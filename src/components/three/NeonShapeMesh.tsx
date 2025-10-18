@@ -1,5 +1,5 @@
 import { MutableRefObject, useEffect, useMemo, useRef, useState } from 'react';
-import { CatmullRomCurve3, Group, MeshStandardMaterial, Vector3, Vector3Tuple } from 'three';
+import { CatmullRomCurve3, Group, MeshStandardMaterial, Shape, Vector3, Vector3Tuple } from 'three';
 import { TransformControls, Text } from '@react-three/drei';
 import { NeonShape } from '../../types/design';
 import { useDesignStore, movementLimits, selectTableHeights } from '../../state/designStore';
@@ -36,11 +36,12 @@ const planarTuple = (vector: { x: number; y: number; z: number }): Vector3Tuple 
   0
 ];
 
-const yawTuple = (rotation: { y: number }): Vector3Tuple => [0, rotation.y, 0];
+const yawTuple = (rotation: { y: number }): Vector3Tuple => [Math.PI, rotation.y, 0];
 
 const clampValue = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
 
 const MAX_NEON_HEIGHT = 0.72;
+const TEXT_FONT_SIZE = 0.4;
 
 const createCurveForKind = (kind: NeonShape['kind']) => {
   switch (kind) {
@@ -48,37 +49,37 @@ const createCurveForKind = (kind: NeonShape['kind']) => {
       const length = MAX_NEON_HEIGHT * 0.7;
       const width = 0.4;
       const points = [
-        new Vector3(-width / 2, length, 0),
+        new Vector3(-width / 2, -length, 0),
         new Vector3(0, 0, 0),
-        new Vector3(width / 2, length * 0.7, 0)
+        new Vector3(width / 2, -length * 0.7, 0)
       ];
       const curve = new CatmullRomCurve3(points, false, 'chordal');
-      return { curve, tubularSegments: 48, height: length } as const;
+      return { curve, tubularSegments: 48 } as const;
     }
     case 'single_peak': {
       const length = MAX_NEON_HEIGHT * 0.9;
       const width = 0.4;
       const points = [
         new Vector3(-width / 2, 0, 0),
-        new Vector3(0, length, 0),
+        new Vector3(0, -length, 0),
         new Vector3(width / 2, 0, 0)
       ];
       const curve = new CatmullRomCurve3(points, false, 'chordal');
-      return { curve, tubularSegments: 48, height: length } as const;
+      return { curve, tubularSegments: 48 } as const;
     }
     case 'zigzag_m': {
       const length = MAX_NEON_HEIGHT * 0.9;
       const width = 0.5;
       const points = [
         new Vector3(-width, 0, 0),
-        new Vector3(-width / 2, length, 0),
-        new Vector3(0, length * 0.1, 0),
-        new Vector3(width / 2, length, 0),
+        new Vector3(-width / 2, -length, 0),
+        new Vector3(0, -length * 0.1, 0),
+        new Vector3(width / 2, -length, 0),
         new Vector3(width, 0, 0)
       ];
       const curve = new CatmullRomCurve3(points, false, 'chordal');
       curve.tension = 0.4;
-      return { curve, tubularSegments: 64, height: length } as const;
+      return { curve, tubularSegments: 64 } as const;
     }
     default:
       return undefined;
@@ -159,7 +160,7 @@ export const NeonShapeMesh = ({ shape, transformMode, orbitControlsRef }: NeonSh
       clampValue(py, minY, maxY),
       0
     );
-    group.current.rotation.set(0, shape.rotation[1] ?? 0, 0);
+    group.current.rotation.set(Math.PI, shape.rotation[1] ?? 0, 0);
     group.current.scale.set(shape.scale[0], shape.scale[1], shape.scale[2]);
   }, [shape.position, shape.rotation, shape.scale, limitX, minY, maxY]);
 
@@ -190,8 +191,8 @@ export const NeonShapeMesh = ({ shape, transformMode, orbitControlsRef }: NeonSh
       if (Math.abs(position.z) > 1e-5) {
         position.z = 0;
       }
-      if (Math.abs(rotation.x) > 1e-4) {
-        rotation.x = 0;
+      if (Math.abs(rotation.x - Math.PI) > 1e-4) {
+        rotation.x = Math.PI;
       }
       if (Math.abs(rotation.z) > 1e-4) {
         rotation.z = 0;
@@ -219,6 +220,8 @@ export const NeonShapeMesh = ({ shape, transformMode, orbitControlsRef }: NeonSh
     const current = group.current;
     if (!current) return;
     const handle = () => {
+      current.rotation.x = Math.PI;
+      current.rotation.z = 0;
       updateShape(shape.id, {
         position: planarTuple(current.position),
         rotation: yawTuple(current.rotation),
@@ -248,10 +251,10 @@ export const NeonShapeMesh = ({ shape, transformMode, orbitControlsRef }: NeonSh
       case 'text':
         return (
           <Text
-            fontSize={0.4}
+            fontSize={TEXT_FONT_SIZE}
             color={shape.color}
             anchorX="center"
-            anchorY="bottom"
+            anchorY="top"
             outlineWidth={0.03}
             outlineColor={shape.color}
             outlineOpacity={0.4 + shape.glowRadius * 0.1}
@@ -305,6 +308,8 @@ export const NeonShapeMesh = ({ shape, transformMode, orbitControlsRef }: NeonSh
           showX={transformMode !== 'rotate'}
           onObjectChange={() => {
             if (!group.current) return;
+            group.current.rotation.x = Math.PI;
+            group.current.rotation.z = 0;
             updateShape(shape.id, {
               position: planarTuple(group.current.position),
               rotation: yawTuple(group.current.rotation),
@@ -326,14 +331,30 @@ const SvgShape = ({ path, material }: SvgShapeProps) => {
   const group = useRef<Group | null>(null);
 
   const shapes = useMemo(() => {
-    if (!path) return [];
+    if (!path) {
+      return [] as Shape[];
+    }
     const loader = new SVGLoader();
     const data = loader.parse(path);
-    return data.paths.flatMap((svgPath) => svgPath.toShapes(true));
+    const svgShapes = data.paths.flatMap((svgPath) => svgPath.toShapes(true)) as Shape[];
+
+    let minY = Infinity;
+    svgShapes.forEach((shape) => {
+      const points = shape.getPoints();
+      points.forEach((point) => {
+        if (point.y < minY) minY = point.y;
+      });
+    });
+
+    if (Number.isFinite(minY)) {
+      svgShapes.forEach((shape) => shape.translate(0, -minY));
+    }
+
+    return svgShapes;
   }, [path]);
 
   return (
-    <group ref={group} scale={0.008}>
+    <group ref={group} scale={0.008} position={[0, 0, 0]}>
       {shapes.map((shape, index) => (
         <mesh key={index} position={[0, 0, 0]}>
           <shapeGeometry args={[shape]} />

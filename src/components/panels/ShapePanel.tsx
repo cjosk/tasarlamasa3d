@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Activity, ChevronDown, Mountain, Trash2, Type } from 'lucide-react';
 import clsx from 'clsx';
 import { useDesignStore } from '../../state/designStore';
@@ -22,7 +22,34 @@ export const ShapePanel = () => {
   const design = useDesignStore((state) => state.history.present);
   const selectShape = useDesignStore((state) => state.selectShape);
   const removeShape = useDesignStore((state) => state.removeShape);
-  const hasOverflow = useMemo(() => design.shapes.length > 6, [design.shapes.length]);
+  const listRef = useRef<HTMLUListElement | null>(null);
+  const [hasOverflow, setHasOverflow] = useState(false);
+
+  useEffect(() => {
+    const listEl = listRef.current;
+    if (!listEl) {
+      return;
+    }
+
+    const checkOverflow = () => {
+      setHasOverflow(listEl.scrollHeight - listEl.clientHeight > 4);
+    };
+
+    checkOverflow();
+
+    let resizeObserver: ResizeObserver | null = null;
+    if (typeof ResizeObserver !== 'undefined') {
+      resizeObserver = new ResizeObserver(checkOverflow);
+      resizeObserver.observe(listEl);
+    }
+
+    listEl.addEventListener('scroll', checkOverflow);
+
+    return () => {
+      resizeObserver?.disconnect();
+      listEl.removeEventListener('scroll', checkOverflow);
+    };
+  }, [design.shapes.length]);
 
   return (
     <div className="flex h-full flex-col gap-4 rounded-3xl border border-slate-800/80 bg-slate-900/70 p-4 shadow-panel backdrop-blur-xl">
@@ -31,7 +58,10 @@ export const ShapePanel = () => {
         <p className="text-xs text-slate-500">Tap an item to select it in the scene.</p>
       </div>
       <div className="relative">
-        <ul className="max-h-[calc(100vh-180px)] overflow-y-auto rounded-2xl border border-slate-800/60 bg-slate-900/70 backdrop-blur-xl shadow-inner divide-y divide-slate-800/40">
+        <ul
+          ref={listRef}
+          className="max-h-[calc(100vh-180px)] overflow-y-auto rounded-2xl border border-slate-800/60 divide-y divide-slate-800/40 bg-slate-900/70 backdrop-blur-xl shadow-inner"
+        >
           {design.shapes.length === 0 ? (
             <li className="p-6 text-center text-xs text-slate-500">
               No shapes yet. Add one from the Shapes menu to start.

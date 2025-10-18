@@ -1,6 +1,6 @@
 import clsx from 'clsx';
 
-const PALETTE = [
+export const NEON_PALETTE = [
   '#FFF3C8',
   '#FF42A1',
   '#FF3E30',
@@ -19,8 +19,8 @@ interface ColorPickerProps {
 
 export const ColorPicker = ({ value, onChange }: ColorPickerProps) => {
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 rounded-3xl border border-slate-700/70 bg-slate-900/80 p-4">
-      {PALETTE.map((color) => {
+    <div className="flex flex-wrap items-center justify-center gap-3 rounded-3xl border border-slate-700/70 bg-slate-900/80 p-4">
+      {NEON_PALETTE.map((color) => {
         const isActive = value.toLowerCase() === color.toLowerCase();
         const glowShadow = `0 0 12px ${color}80, 0 0 24px ${color}40`;
         return (

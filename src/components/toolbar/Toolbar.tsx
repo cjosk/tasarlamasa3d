@@ -77,9 +77,9 @@ export const Toolbar = () => {
         onClick={handleFinish}
         disabled={finishDisabled}
         className={clsx(
-          'pointer-events-auto fixed bottom-8 left-1/2 z-40 flex -translate-x-1/2 items-center gap-2 rounded-2xl bg-neon-pink/80 px-6 py-3 text-sm font-bold uppercase tracking-[0.35em] text-white shadow-lg shadow-neon-pink/40 backdrop-blur-xl transition-all',
+          'hidden items-center gap-3 rounded-2xl bg-neon-pink/80 px-6 py-3 text-sm font-bold uppercase tracking-[0.35em] text-white shadow-lg shadow-neon-pink/40 backdrop-blur-xl transition-all',
           'hover:bg-neon-pink disabled:cursor-not-allowed disabled:opacity-60',
-          'md:static md:translate-x-0 md:gap-3'
+          'md:flex'
         )}
       >
         {(finishing || exporting) && <Loader2 className="h-4 w-4 animate-spin" />}
