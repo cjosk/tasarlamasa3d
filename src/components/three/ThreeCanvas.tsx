@@ -23,6 +23,8 @@ export const ThreeCanvas = () => {
   const tableProfile = useDesignStore(selectTableProfile);
   const shapes = design.shapes;
   const orbitControlsRef = useRef<OrbitControlsImpl | null>(null);
+  const cameraPosition = useMemo(() => [0, 25, 70] as const, []);
+  const cameraTarget = useMemo(() => [0, 15, 0] as const, []);
 
   const bloomConfig = useMemo(
     () => ({
@@ -38,7 +40,11 @@ export const ThreeCanvas = () => {
       <Canvas
         className="pointer-events-auto"
         shadows
-        camera={{ position: [4.6, 4.2, 5], fov: 42, near: 0.1, far: 60 }}
+        camera={{ position: [...cameraPosition], fov: 38, near: 0.1, far: 160 }}
+        onCreated={({ camera }) => {
+          camera.position.set(...cameraPosition);
+          camera.lookAt(...cameraTarget);
+        }}
         gl={{ alpha: true, antialias: true, preserveDrawingBuffer: true }}
       >
         <color attach="background" args={[0.05, 0.08, 0.16]} />
@@ -89,11 +95,12 @@ export const ThreeCanvas = () => {
           <Environment preset="city" />
           <OrbitControls
             ref={orbitControlsRef}
+            target={cameraTarget}
             enablePan={false}
-            minPolarAngle={Math.PI / 4}
+            minPolarAngle={Math.PI / 5}
             maxPolarAngle={(2 * Math.PI) / 3}
-            minDistance={2}
-            maxDistance={12}
+            minDistance={8}
+            maxDistance={18}
             enableDamping
             dampingFactor={0.1}
           />

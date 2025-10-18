@@ -1,5 +1,5 @@
 import { ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { MoveDown, MoveLeft, MoveRight, MoveUp, RotateCw } from 'lucide-react';
+import { FolderOpen, MoveDown, MoveLeft, MoveRight, MoveUp, RotateCw, Trash2 } from 'lucide-react';
 import clsx from 'clsx';
 import type { Vector3Tuple } from 'three';
 import {
@@ -10,6 +10,7 @@ import {
 import { useDesignContext } from '../../providers/DesignProvider';
 import { NEON_PALETTE } from './ColorPicker';
 import type { ShapeKind } from '../../types/design';
+import type { TableSizeId } from '../three/layers/tableDimensions';
 
 const POSITION_STEP = 0.05;
 const ROTATION_STEP = Math.PI / 12; // 15°
@@ -43,15 +44,23 @@ export const MobileControlPanel = () => {
     const { selectedId: activeId, shapes } = state.history.present;
     return shapes.find((shape) => shape.id === activeId);
   });
+  const shapes = useDesignStore((state) => state.history.present.shapes);
   const updateShape = useDesignStore((state) => state.updateShape);
   const addShape = useDesignStore((state) => state.addShape);
   const advanceOnboarding = useDesignStore((state) => state.advanceOnboarding);
+  const selectShape = useDesignStore((state) => state.selectShape);
+  const removeShape = useDesignStore((state) => state.removeShape);
   const { saveDesign, exportImage, exportGlb, canvasRef, exporting } = useDesignContext();
   const setError = useDesignStore((state) => state.setError);
   const [finishing, setFinishing] = useState(false);
+  const [layersOpen, setLayersOpen] = useState(false);
   const rafRef = useRef<number | null>(null);
   const lastFrameRef = useRef<number>(0);
+  const layerListRef = useRef<HTMLUListElement | null>(null);
+  const [layerHasOverflow, setLayerHasOverflow] = useState(false);
   const { x: limitX, y: limitY } = movementLimits;
+  const tableSizeId = useDesignStore((state) => state.history.present.tableSizeId);
+  const setTableSize = useDesignStore((state) => state.setTableSize);
 
   const isActionDisabled = !selectedId;
 
@@ -88,6 +97,30 @@ export const MobileControlPanel = () => {
       stopLoop();
     }
   }, [selectedId, stopLoop]);
+
+  useEffect(() => {
+    const list = layerListRef.current;
+    if (!list) return;
+
+    const evaluateOverflow = () => {
+      setLayerHasOverflow(list.scrollHeight - list.clientHeight > 4);
+    };
+
+    evaluateOverflow();
+
+    let resizeObserver: ResizeObserver | undefined;
+    if (typeof ResizeObserver !== 'undefined') {
+      resizeObserver = new ResizeObserver(evaluateOverflow);
+      resizeObserver.observe(list);
+    }
+
+    list.addEventListener('scroll', evaluateOverflow);
+
+    return () => {
+      resizeObserver?.disconnect();
+      list.removeEventListener('scroll', evaluateOverflow);
+    };
+  }, [shapes.length]);
 
   const clampPosition = useCallback(
     (x: number, y: number): Vector3Tuple => {
@@ -205,6 +238,29 @@ export const MobileControlPanel = () => {
 
   const finishDisabled = finishing || exporting || !canvasRef.current;
 
+  const MOBILE_TABLE_SIZES: readonly { id: TableSizeId; label: string; helperIds?: readonly TableSizeId[] }[] = useMemo(
+    () => [
+      { id: '70x45x50', label: 'Küçük' },
+      { id: '90x45x50', label: 'Orta', helperIds: ['120x80x50'] },
+      { id: '150x80x50', label: 'Büyük' }
+    ],
+    []
+  );
+
+  const handleTableSizePress = useCallback(
+    (option: (typeof MOBILE_TABLE_SIZES)[number]) => {
+      if (option.helperIds && option.helperIds.length > 0) {
+        const cycle = [option.id, ...option.helperIds];
+        const currentIndex = tableSizeId && cycle.includes(tableSizeId) ? cycle.indexOf(tableSizeId) : -1;
+        const nextId = currentIndex >= 0 ? cycle[(currentIndex + 1) % cycle.length] : option.id;
+        setTableSize(nextId);
+        return;
+      }
+      setTableSize(option.id);
+    },
+    [setTableSize, tableSizeId, MOBILE_TABLE_SIZES]
+  );
+
   const movementButtons = useMemo<readonly MovementButton[]>(
     () => [
       { kind: 'move', direction: 'left', icon: <MoveLeft className="h-5 w-5" />, label: 'Sola taşı' },
@@ -228,7 +284,66 @@ export const MobileControlPanel = () => {
   );
 
   return (
-    <div className="space-y-5">
+    <div className="flex flex-col gap-4 pb-6">
+      <div className="flex items-center justify-between">
+        <span className="text-[11px] font-semibold uppercase tracking-[0.35em] text-slate-300">Kontroller</span>
+        <button
+          type="button"
+          onClick={() => setLayersOpen((prev) => !prev)}
+          className={clsx(
+            'flex h-10 w-10 items-center justify-center rounded-full border border-slate-700/60 bg-slate-900/80 text-slate-200 transition-colors duration-150 ease-micro',
+            'hover:border-neon-blue/60 hover:text-white active:scale-95'
+          )}
+          aria-expanded={layersOpen}
+          aria-controls="mobile-layer-list"
+          aria-label={layersOpen ? 'Katman listesini gizle' : 'Katman listesini göster'}
+        >
+          <FolderOpen className="h-5 w-5" />
+        </button>
+      </div>
+      {layersOpen && (
+        <div className="relative rounded-2xl border border-slate-800/60 bg-slate-900/70 p-2 shadow-inner">
+          <ul
+            id="mobile-layer-list"
+            ref={layerListRef}
+            className="max-h-40 overflow-y-auto divide-y divide-slate-800/40"
+          >
+            {shapes.length === 0 ? (
+              <li className="py-4 text-center text-xs text-slate-500">Henüz şekil yok. Aşağıdan ekleyin.</li>
+            ) : (
+              shapes.map((shape) => {
+                const isSelected = shape.id === selectedId;
+                return (
+                  <li key={shape.id} className="last:border-b-0">
+                    <button
+                      type="button"
+                      onClick={() => selectShape(shape.id)}
+                      className={clsx(
+                        'flex w-full items-center justify-between gap-3 px-3 py-3 text-left text-sm transition',
+                        isSelected
+                          ? 'bg-neon-blue/10 text-white shadow-[0_0_16px_rgba(59,130,246,0.25)]'
+                          : 'text-slate-200 hover:bg-slate-800/70 hover:text-white'
+                      )}
+                    >
+                      <span className="truncate font-semibold uppercase tracking-[0.25em]">{shape.label}</span>
+                      <Trash2
+                        className="h-4 w-4 text-slate-500 transition hover:text-rose-400"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          removeShape(shape.id);
+                        }}
+                      />
+                    </button>
+                  </li>
+                );
+              })
+            )}
+          </ul>
+          {layerHasOverflow && (
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-8 rounded-b-2xl bg-gradient-to-t from-slate-900/85 to-transparent" />
+          )}
+        </div>
+      )}
       <div className="flex items-center justify-center gap-3">
         {movementButtons.map((button) => {
           const glow = (
@@ -330,18 +445,45 @@ export const MobileControlPanel = () => {
           );
         })}
       </div>
-      <div className="flex justify-center">
-        <button
-          type="button"
-          onClick={handleFinish}
-          disabled={finishDisabled}
-          className={clsx(
-            'flex min-w-[220px] items-center justify-center rounded-2xl bg-neon-pink/80 px-6 py-3 text-sm font-bold uppercase tracking-[0.35em] text-white shadow-lg shadow-neon-pink/40 backdrop-blur-xl transition-all',
-            'hover:bg-neon-pink disabled:cursor-not-allowed disabled:opacity-60'
-          )}
-        >
-          {finishing || exporting ? 'Kaydediliyor…' : 'Tasarımı Bitir'}
-        </button>
+      <div className="flex flex-col gap-2">
+        <span className="text-center text-[11px] uppercase tracking-[0.3em] text-slate-400">Masa Boyutu</span>
+        <div className="flex justify-center gap-2">
+          {MOBILE_TABLE_SIZES.map((option) => {
+            const matchesCurrent =
+              tableSizeId === option.id || (tableSizeId ? option.helperIds?.includes(tableSizeId) : false);
+            return (
+              <button
+                key={option.id}
+                type="button"
+                onClick={() => handleTableSizePress(option)}
+                className={clsx(
+                  'px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] transition',
+                  'rounded-full border backdrop-blur-md',
+                  matchesCurrent
+                    ? 'border-neon-pink/80 bg-neon-pink/30 text-white shadow-[0_0_22px_rgba(236,72,153,0.35)]'
+                    : 'border-slate-700/70 text-slate-300 hover:border-neon-blue/60 hover:text-white'
+                )}
+              >
+                {option.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+      <div className="sticky bottom-0 left-0 right-0 pt-2">
+        <div className="rounded-2xl bg-slate-900/90 p-3 shadow-inner shadow-slate-900/60">
+          <button
+            type="button"
+            onClick={handleFinish}
+            disabled={finishDisabled}
+            className={clsx(
+              'flex w-full items-center justify-center rounded-2xl bg-neon-pink/80 px-6 py-3 text-sm font-bold uppercase tracking-[0.35em] text-white shadow-lg shadow-neon-pink/40 backdrop-blur-xl transition-all',
+              'hover:bg-neon-pink disabled:cursor-not-allowed disabled:opacity-60'
+            )}
+          >
+            {finishing || exporting ? 'KAYDEDİLİYOR…' : 'TASARIMI BİTİR'}
+          </button>
+        </div>
       </div>
     </div>
   );
