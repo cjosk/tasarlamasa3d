@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { BezierCurve, ChevronDown, LineSegments, Trash2, Triangle, Type } from 'lucide-react';
+import { ChevronDown, LineChart, Shapes, Trash2, Triangle, Type } from 'lucide-react';
 import clsx from 'clsx';
 import { useDesignStore } from '../../state/designStore';
 
@@ -10,9 +10,9 @@ const iconForKind = (kind: string) => {
     case 'deep_v_shape':
       return <ChevronDown className="h-4 w-4" />;
     case 'smooth_n_curve':
-      return <BezierCurve className="h-4 w-4" />;
+      return <Shapes className="h-4 w-4" />;
     case 'sharp_m_shape':
-      return <LineSegments className="h-4 w-4" />;
+      return <LineChart className="h-4 w-4" />;
     case 'text':
       return <Type className="h-4 w-4" />;
     default:
