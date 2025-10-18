@@ -56,7 +56,7 @@ export const EnvironmentPreviewPanel = () => {
   };
 
   return (
-    <div className="pointer-events-auto flex w-full justify-center gap-3 rounded-2xl border border-slate-700/40 bg-slate-900/50 p-2 shadow-md backdrop-blur-lg">
+    <div className="pointer-events-auto flex justify-center gap-3 rounded-2xl border border-slate-700/40 bg-slate-900/70 p-2 shadow-[0_0_25px_rgba(0,0,0,0.45)] backdrop-blur-xl">
       {ENVIRONMENTS.map((option) => (
         <button
           key={option.id}
@@ -65,7 +65,7 @@ export const EnvironmentPreviewPanel = () => {
           className={clsx(
             'h-14 w-14 overflow-hidden rounded-xl border transition-all duration-200 ease-out hover:scale-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-neon-blue focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900',
             activeEnvironmentId === option.id
-              ? 'border-neon-blue shadow-[0_0_18px_rgba(82,185,255,0.5)]'
+              ? 'border-neon-blue shadow-[0_0_16px_rgba(82,185,255,0.45)]'
               : 'border-slate-700 hover:border-slate-500'
           )}
           aria-label={`${option.label} ortamını seç`}

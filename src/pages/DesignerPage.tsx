@@ -11,6 +11,7 @@ import { useSearchParams } from 'react-router-dom';
 import { useFirebase } from '../providers/FirebaseProvider';
 import { TableSizePanel } from '../components/panels/TableSizePanel';
 import { MobileControlPanel } from '../components/panels/MobileControlPanel';
+import { EnvironmentPreviewPanel } from '../components/panels/EnvironmentPreviewPanel';
 
 export const DesignerPage = () => {
   const [searchParams] = useSearchParams();
@@ -45,6 +46,11 @@ export const DesignerPage = () => {
           <ShapePanel />
         </div>
         <div className="relative flex min-h-[400px] flex-col overflow-hidden rounded-3xl border border-slate-800/80 bg-slate-900/70 shadow-panel">
+          <div className="pointer-events-none absolute inset-x-0 top-4 z-30 flex justify-center">
+            <div className="pointer-events-auto">
+              <EnvironmentPreviewPanel />
+            </div>
+          </div>
           <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex justify-between px-4 py-3 text-xs text-slate-400">
             <span>{design.title}</span>
             <span>{authUser?.displayName ?? 'Designer'}</span>
@@ -63,6 +69,11 @@ export const DesignerPage = () => {
       <div className="md:hidden">
         <div className="flex h-screen flex-col bg-[#0d1117]">
           <div className="relative h-1/2 flex-1 overflow-hidden">
+            <div className="pointer-events-none absolute inset-x-0 top-4 z-30 flex justify-center">
+              <div className="pointer-events-auto">
+                <EnvironmentPreviewPanel />
+              </div>
+            </div>
             <ThreeCanvas />
             <OnboardingGuide />
           </div>
