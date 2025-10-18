@@ -1,17 +1,35 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { MoveDown, MoveLeft, MoveRight, MoveUp, RotateCw } from 'lucide-react';
 import clsx from 'clsx';
-import { Vector3Tuple } from 'three';
+import type { Vector3Tuple } from 'three';
 import { useDesignStore } from '../../state/designStore';
 
 type MoveDirection = 'left' | 'right' | 'up' | 'down';
 
-const POSITION_STEP = 0.5;
-const ROTATION_STEP = Math.PI / 12;
+type IntervalHandle = ReturnType<typeof setInterval> | null;
+
+const POSITION_STEP = 0.05;
+const ROTATION_STEP = (2 * Math.PI) / 180;
+const HOLD_DELAY = 70;
 
 export const MobileControlPanel = () => {
   const selectedId = useDesignStore((state) => state.history.present.selectedId);
   const updateShape = useDesignStore((state) => state.updateShape);
+  const intervalRef = useRef<IntervalHandle>(null);
+
+  const stopLoop = useCallback(() => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+  }, []);
+
+  const runAction = useCallback((action: () => void) => {
+    action();
+    intervalRef.current = setInterval(action, HOLD_DELAY);
+  }, []);
+
+  useEffect(() => stopLoop, [stopLoop]);
 
   const moveShape = useCallback(
     (direction: MoveDirection) => {
@@ -66,24 +84,43 @@ export const MobileControlPanel = () => {
     updateShape(activeId, { rotation: nextRotation });
   }, [updateShape]);
 
+  const handlePress = useCallback(
+    (action: () => void) => {
+      stopLoop();
+      runAction(action);
+    },
+    [runAction, stopLoop]
+  );
+
+  const handleRelease = useCallback(() => {
+    stopLoop();
+  }, [stopLoop]);
+
+  const buttonClassName = useMemo(
+    () =>
+      clsx(
+        'flex h-16 w-16 items-center justify-center rounded-2xl border border-slate-700/60 bg-slate-900/70',
+        'text-white shadow-lg shadow-neon-blue/10 transition-transform transition-colors duration-150 ease-micro',
+        'hover:bg-neon-blue/60 active:scale-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neon-blue'
+      ),
+    []
+  );
+
   if (!selectedId) {
     return null;
   }
 
-  const buttonClassName = clsx(
-    'flex h-16 w-16 items-center justify-center rounded-2xl border border-slate-700/60 bg-slate-900/70',
-    'text-white shadow-lg shadow-neon-blue/10 transition-transform transition-colors duration-150 ease-micro',
-    'active:scale-90 hover:bg-neon-blue/60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neon-blue'
-  );
-
   return (
-    <div className="pointer-events-auto fixed inset-x-0 bottom-24 z-40 flex justify-center md:hidden">
+    <div className="pointer-events-auto fixed inset-x-0 bottom-28 z-40 flex justify-center md:hidden">
       <div className="flex w-[min(320px,90vw)] flex-col items-center gap-3 rounded-3xl border border-slate-700/60 bg-slate-900/70 p-4 text-white shadow-panel backdrop-blur-xl">
         <div className="flex justify-center">
           <button
             type="button"
             className={buttonClassName}
-            onClick={() => moveShape('up')}
+            onPointerDown={() => handlePress(() => moveShape('up'))}
+            onPointerUp={handleRelease}
+            onPointerLeave={handleRelease}
+            onPointerCancel={handleRelease}
             aria-label="Move up"
           >
             <MoveUp className="h-6 w-6" />
@@ -93,7 +130,10 @@ export const MobileControlPanel = () => {
           <button
             type="button"
             className={buttonClassName}
-            onClick={() => moveShape('left')}
+            onPointerDown={() => handlePress(() => moveShape('left'))}
+            onPointerUp={handleRelease}
+            onPointerLeave={handleRelease}
+            onPointerCancel={handleRelease}
             aria-label="Move left"
           >
             <MoveLeft className="h-6 w-6" />
@@ -101,7 +141,10 @@ export const MobileControlPanel = () => {
           <button
             type="button"
             className={buttonClassName}
-            onClick={rotateShape}
+            onPointerDown={() => handlePress(rotateShape)}
+            onPointerUp={handleRelease}
+            onPointerLeave={handleRelease}
+            onPointerCancel={handleRelease}
             aria-label="Rotate"
           >
             <RotateCw className="h-6 w-6" />
@@ -109,7 +152,10 @@ export const MobileControlPanel = () => {
           <button
             type="button"
             className={buttonClassName}
-            onClick={() => moveShape('right')}
+            onPointerDown={() => handlePress(() => moveShape('right'))}
+            onPointerUp={handleRelease}
+            onPointerLeave={handleRelease}
+            onPointerCancel={handleRelease}
             aria-label="Move right"
           >
             <MoveRight className="h-6 w-6" />
@@ -119,7 +165,10 @@ export const MobileControlPanel = () => {
           <button
             type="button"
             className={buttonClassName}
-            onClick={() => moveShape('down')}
+            onPointerDown={() => handlePress(() => moveShape('down'))}
+            onPointerUp={handleRelease}
+            onPointerLeave={handleRelease}
+            onPointerCancel={handleRelease}
             aria-label="Move down"
           >
             <MoveDown className="h-6 w-6" />
@@ -129,4 +178,3 @@ export const MobileControlPanel = () => {
     </div>
   );
 };
-

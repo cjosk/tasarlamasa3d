@@ -89,14 +89,17 @@ const LABEL_PRESETS: Record<ShapeKind, string> = {
   svg: 'Imported SVG'
 };
 
+const NEON_THICKNESS = 0.006;
+const STACK_SPACING = 0.35;
+
 const createShape = (kind: ShapeKind, payload?: Partial<NeonShape>): NeonShape => {
   const base: NeonShape = {
     id: nanoid(),
     kind,
     label: `${LABEL_PRESETS[kind]} #${Math.floor(Math.random() * 900 + 100)}`,
-    color: '#22d3ee',
+    color: '#52B9FF',
     intensity: 2.4,
-    thickness: 0.2,
+    thickness: NEON_THICKNESS,
     glowRadius: 0.8,
     position: [0, 0.02, 0],
     rotation: [0, 0, 0],
@@ -153,9 +156,12 @@ export const useDesignStore = create<DesignStoreState>()(
         const shape = createShape(kind, payload);
         const profile = getTableProfile(state.history.present.tableSizeId);
         const heights = getTableHeights(profile);
+        const nextIndex = state.history.present.shapes.length;
+        const stackedZ = -nextIndex * STACK_SPACING;
         const positionedShape: NeonShape = {
           ...shape,
-          position: [shape.position[0], heights.neonSurfaceY, shape.position[2]] as Vector3Tuple
+          thickness: NEON_THICKNESS,
+          position: [shape.position[0], heights.neonSurfaceY, stackedZ] as Vector3Tuple
         };
         const next: DesignStateData = {
           ...state.history.present,
@@ -166,9 +172,17 @@ export const useDesignStore = create<DesignStoreState>()(
       }),
     updateShape: (id, patch) =>
       set((state) => {
-        const nextShapes = state.history.present.shapes.map((shape) =>
-          shape.id === id ? { ...shape, ...patch } : shape
-        );
+        const nextShapes = state.history.present.shapes.map((shape) => {
+          if (shape.id !== id) {
+            return shape;
+          }
+          const { thickness: _ignoredThickness, ...restPatch } = patch;
+          return {
+            ...shape,
+            ...restPatch,
+            thickness: NEON_THICKNESS
+          };
+        });
         const next: DesignStateData = {
           ...state.history.present,
           shapes: nextShapes
@@ -243,12 +257,13 @@ export const useDesignStore = create<DesignStoreState>()(
           ...defaultDesign(),
           ...clone(data),
           tableSizeId: data.tableSizeId ?? DEFAULT_TABLE_SIZE_ID,
-          shapes: (data.shapes ?? []).map((shape) => ({
+          shapes: (data.shapes ?? []).map((shape, index) => ({
             ...shape,
+            thickness: NEON_THICKNESS,
             position: [
               shape.position?.[0] ?? 0,
               shape.position?.[1] ?? heights.neonSurfaceY,
-              shape.position?.[2] ?? 0
+              shape.position?.[2] ?? -index * STACK_SPACING
             ] as Vector3Tuple
           }))
         };

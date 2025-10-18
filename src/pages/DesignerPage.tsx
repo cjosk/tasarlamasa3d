@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Toolbar } from '../components/toolbar/Toolbar';
+import { ShapeDropdown } from '../components/toolbar/ShapeDropdown';
 import { ThreeCanvas } from '../components/three/ThreeCanvas';
 import { ShapePanel } from '../components/panels/ShapePanel';
 import { InspectorPanel } from '../components/panels/InspectorPanel';
@@ -75,6 +76,7 @@ export const DesignerPage = () => {
         <GlassControlPanel />
         <PreviewToggle />
       </div>
+      <ShapeDropdown />
       <MobileControlPanel />
       <div className="fixed inset-x-0 bottom-0 z-30 flex items-center justify-between gap-3 bg-slate-950/60 px-4 py-3 backdrop-blur lg:hidden">
         <button

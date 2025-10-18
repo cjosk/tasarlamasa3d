@@ -154,7 +154,7 @@ export const NeonShapeMesh = ({ shape, transformMode, orbitControlsRef }: NeonSh
   }, [material]);
 
   const neonCurve = useMemo(() => createCurveForKind(shape.kind), [shape.kind]);
-  const neonRadius = useMemo(() => Math.max(shape.thickness / 4, 0.01), [shape.thickness]);
+  const neonRadius = useMemo(() => Math.max(shape.thickness / 2, 0.003), [shape.thickness]);
 
   useFrame(({ clock }) => {
     if (pendingFocusRef.current && orbitControlsRef.current) {
