@@ -61,7 +61,9 @@ export const MobileControlPanel = () => {
   const [layerHasOverflow, setLayerHasOverflow] = useState(false);
   const [libraryOpen, setLibraryOpen] = useState(false);
   const movementLimits = useDesignStore(selectMovementLimits);
-  const { x: limitX, y: limitY } = movementLimits;
+  const tableHeights = useDesignStore(selectTableHeights);
+  const { x: limitX, z: limitZ } = movementLimits;
+  const surfaceY = tableHeights.neonSurfaceY;
   const tableSizeId = useDesignStore((state) => state.history.present.tableSizeId);
   const setTableSize = useDesignStore((state) => state.setTableSize);
 
@@ -126,18 +128,12 @@ export const MobileControlPanel = () => {
   }, [shapes.length]);
 
   const clampPosition = useCallback(
-    (x: number, y: number): Vector3Tuple => {
-      const state = useDesignStore.getState();
-      const heights = selectTableHeights(state);
-      const minY = heights.neonSurfaceY;
-      const maxY = minY + limitY;
-      return [
-        Math.min(Math.max(x, -limitX), limitX),
-        Math.min(Math.max(y, minY), maxY),
-        0
-      ];
-    },
-    [limitX, limitY]
+    (x: number, z: number): Vector3Tuple => [
+      Math.min(Math.max(x, -limitX), limitX),
+      surfaceY,
+      Math.min(Math.max(z, -limitZ), limitZ)
+    ],
+    [limitX, limitZ, surfaceY]
   );
 
   const moveShape = useCallback(
@@ -151,9 +147,9 @@ export const MobileControlPanel = () => {
       if (!target) {
         return;
       }
-      const [x, y] = target.position;
+      const [x, , z = 0] = target.position;
       let nextX = x;
-      let nextY = y;
+      let nextZ = z;
       switch (direction) {
         case 'left':
           nextX = x - POSITION_STEP;
@@ -162,13 +158,13 @@ export const MobileControlPanel = () => {
           nextX = x + POSITION_STEP;
           break;
         case 'up':
-          nextY = y + POSITION_STEP;
+          nextZ = z - POSITION_STEP;
           break;
         case 'down':
-          nextY = y - POSITION_STEP;
+          nextZ = z + POSITION_STEP;
           break;
       }
-      updateShape(activeId, { position: clampPosition(nextX, nextY) });
+      updateShape(activeId, { position: clampPosition(nextX, nextZ) });
     },
     [clampPosition, updateShape]
   );

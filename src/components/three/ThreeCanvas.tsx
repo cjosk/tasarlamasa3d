@@ -1,6 +1,6 @@
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Environment, ContactShadows, Html } from '@react-three/drei';
-import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
+import { Suspense, useEffect, useMemo, useRef } from 'react';
 import { EffectComposer, Bloom } from '@react-three/postprocessing';
 import { NeonShapeMesh } from './NeonShapeMesh';
 import {
@@ -23,12 +23,8 @@ export const ThreeCanvas = () => {
   const tableProfile = useDesignStore(selectTableProfile);
   const shapes = design.shapes;
   const orbitControlsRef = useRef<OrbitControlsImpl | null>(null);
-  const cameraPosition = useMemo(() => [4.6, 4.2, 5] as const, []);
-  const cameraTarget = useMemo(
-    () => [0, tableHeights.neonSurfaceY + 0.25, 0] as const,
-    [tableHeights.neonSurfaceY]
-  );
-  const [isMobile, setIsMobile] = useState(false);
+  const cameraPosition = useMemo(() => [0, 5.5, 9] as const, []);
+  const cameraTarget = useMemo(() => [0, 2, 0] as const, []);
 
   useEffect(() => {
     if (!orbitControlsRef.current) {
@@ -37,23 +33,6 @@ export const ThreeCanvas = () => {
     orbitControlsRef.current.target.set(...cameraTarget);
     orbitControlsRef.current.update();
   }, [cameraTarget]);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') {
-      return;
-    }
-    const query = window.matchMedia('(max-width: 768px)');
-    const update = () => setIsMobile(query.matches);
-    update();
-
-    if (typeof query.addEventListener === 'function') {
-      query.addEventListener('change', update);
-      return () => query.removeEventListener('change', update);
-    }
-
-    query.addListener(update);
-    return () => query.removeListener(update);
-  }, []);
 
   const bloomConfig = useMemo(
     () => ({
@@ -73,7 +52,7 @@ export const ThreeCanvas = () => {
         <Canvas
           className="pointer-events-auto h-full w-full bg-[#1a1f2b]"
           shadows
-          camera={{ position: [...cameraPosition], fov: 42, near: 0.1, far: 60 }}
+          camera={{ position: [...cameraPosition], fov: 45, near: 0.1, far: 60 }}
           onCreated={({ camera }) => {
             camera.position.set(...cameraPosition);
             camera.lookAt(...cameraTarget);
@@ -130,11 +109,12 @@ export const ThreeCanvas = () => {
               ref={orbitControlsRef}
               target={cameraTarget}
               enablePan={false}
-              enableRotate={!isMobile}
+              enableRotate
+              enableZoom={false}
               minPolarAngle={Math.PI / 4}
               maxPolarAngle={(2 * Math.PI) / 3}
               minDistance={2}
-              maxDistance={12}
+              maxDistance={10}
               enableDamping
               dampingFactor={0.1}
             />

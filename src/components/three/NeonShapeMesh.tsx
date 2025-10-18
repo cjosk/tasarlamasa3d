@@ -1,4 +1,4 @@
-import { MutableRefObject, useEffect, useMemo, useRef, useState } from 'react';
+import { MutableRefObject, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Group, MeshStandardMaterial, Shape as ThreeShape, Vector3, Vector3Tuple } from 'three';
 import { TransformControls, Text } from '@react-three/drei';
 import { NeonShape } from '../../types/design';
@@ -33,12 +33,6 @@ const vectorTuple = (vector: { x: number; y: number; z: number }): Vector3Tuple 
   vector.z
 ];
 
-const planarTuple = (vector: { x: number; y: number; z: number }): Vector3Tuple => [
-  vector.x,
-  vector.y,
-  0
-];
-
 const yawTuple = (rotation: { y: number }): Vector3Tuple => [Math.PI, rotation.y, 0];
 
 const clampValue = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
@@ -61,9 +55,17 @@ export const NeonShapeMesh = ({ shape, transformMode, orbitControlsRef }: NeonSh
   const { camera } = useThree();
   const isSelected = selectedId === shape.id;
   const limitX = movementLimits.x;
-  const limitY = movementLimits.y;
-  const minY = tableHeights.neonSurfaceY;
-  const maxY = minY + limitY;
+  const limitZ = movementLimits.z;
+  const surfaceY = tableHeights.neonSurfaceY;
+
+  const clampPositionTuple = useCallback(
+    (vector: { x: number; y: number; z: number }): Vector3Tuple => [
+      clampValue(vector.x, -limitX, limitX),
+      surfaceY,
+      clampValue(vector.z, -limitZ, limitZ)
+    ],
+    [limitX, limitZ, surfaceY]
+  );
 
   useEffect(() => {
     const controls = transformRef.current;
@@ -114,15 +116,12 @@ export const NeonShapeMesh = ({ shape, transformMode, orbitControlsRef }: NeonSh
 
   useEffect(() => {
     if (!group.current) return;
-    const [px, py] = shape.position;
-    group.current.position.set(
-      clampValue(px, -limitX, limitX),
-      clampValue(py, minY, maxY),
-      0
-    );
+    const [px, , pz = 0] = shape.position;
+    const nextPosition = clampPositionTuple({ x: px, y: surfaceY, z: pz });
+    group.current.position.set(...nextPosition);
     group.current.rotation.set(Math.PI, shape.rotation[1] ?? 0, 0);
     group.current.scale.set(shape.scale[0], shape.scale[1], shape.scale[2]);
-  }, [shape.position, shape.rotation, shape.scale, limitX, minY, maxY]);
+  }, [shape.position, shape.rotation, shape.scale, clampPositionTuple]);
 
   const material = useMemo(
     () => (shape.kind === 'text' ? null : getColor(shape.color, shape.intensity)),
@@ -141,15 +140,15 @@ export const NeonShapeMesh = ({ shape, transformMode, orbitControlsRef }: NeonSh
     if (group.current) {
       const { position, rotation } = group.current;
       const clampedX = clampValue(position.x, -limitX, limitX);
-      const clampedY = clampValue(position.y, minY, maxY);
+      const clampedZ = clampValue(position.z, -limitZ, limitZ);
       if (Math.abs(position.x - clampedX) > 1e-4) {
         position.x = clampedX;
       }
-      if (Math.abs(position.y - clampedY) > 1e-4) {
-        position.y = clampedY;
+      if (Math.abs(position.y - surfaceY) > 1e-4) {
+        position.y = surfaceY;
       }
-      if (Math.abs(position.z) > 1e-5) {
-        position.z = 0;
+      if (Math.abs(position.z - clampedZ) > 1e-4) {
+        position.z = clampedZ;
       }
       if (Math.abs(rotation.x - Math.PI) > 1e-4) {
         rotation.x = Math.PI;
@@ -179,15 +178,15 @@ export const NeonShapeMesh = ({ shape, transformMode, orbitControlsRef }: NeonSh
     if (!isSelected) return;
     const current = group.current;
     if (!current) return;
-    const handle = () => {
-      current.rotation.x = Math.PI;
-      current.rotation.z = 0;
-      updateShape(shape.id, {
-        position: planarTuple(current.position),
-        rotation: yawTuple(current.rotation),
-        scale: vectorTuple(current.scale)
-      });
-    };
+      const handle = () => {
+        current.rotation.x = Math.PI;
+        current.rotation.z = 0;
+        updateShape(shape.id, {
+          position: clampPositionTuple(current.position),
+          rotation: yawTuple(current.rotation),
+          scale: vectorTuple(current.scale)
+        });
+      };
     return () => handle();
   }, [isSelected, shape.id, updateShape]);
 
@@ -230,6 +229,10 @@ export const NeonShapeMesh = ({ shape, transformMode, orbitControlsRef }: NeonSh
     }
   };
 
+  const showXHandle = transformMode !== 'rotate';
+  const showYHandle = transformMode === 'rotate';
+  const showZHandle = transformMode !== 'rotate';
+
   return (
     <>
       <group
@@ -265,15 +268,15 @@ export const NeonShapeMesh = ({ shape, transformMode, orbitControlsRef }: NeonSh
           mode={transformMode}
           camera={camera}
           enabled
-          showZ={false}
-          showX={transformMode !== 'rotate'}
-          showY
+          showX={showXHandle}
+          showY={showYHandle}
+          showZ={showZHandle}
           onObjectChange={() => {
             if (!group.current) return;
             group.current.rotation.x = Math.PI;
             group.current.rotation.z = 0;
             updateShape(shape.id, {
-              position: planarTuple(group.current.position),
+              position: clampPositionTuple(group.current.position),
               rotation: yawTuple(group.current.rotation),
               scale: vectorTuple(group.current.scale)
             });

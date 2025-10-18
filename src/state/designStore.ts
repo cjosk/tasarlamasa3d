@@ -115,7 +115,6 @@ const LABEL_PRESETS: Record<CanonicalShapeKind, string> = {
 };
 
 const NEON_THICKNESS = 0.017;
-const STACK_SPACING = 0.08;
 const MOVEMENT_MARGIN = 0.05; // 5 cm safety padding inside the glass walls
 const MIN_BOUND = 0.05;
 const VERTICAL_RANGE_RATIO = 0.5;
@@ -124,10 +123,19 @@ const resolveTableSizeId = (sizeId?: TableSizeId): TableSizeId => sizeId ?? DEFA
 
 const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
 
-const calculateMovementLimits = (profile: TableSizeOption) => {
+type MovementLimits = {
+  x: number;
+  y: number;
+  z: number;
+};
+
+const calculateMovementLimits = (profile: TableSizeOption): MovementLimits => {
   const halfWidth = profile.width / 2;
+  const halfDepth = profile.depth / 2;
   const baseLimitX = halfWidth - MOVEMENT_MARGIN;
+  const baseLimitZ = halfDepth - MOVEMENT_MARGIN;
   const horizontalLimit = Math.max(MIN_BOUND, baseLimitX);
+  const depthLimit = Math.max(MIN_BOUND, baseLimitZ);
 
   const heights = getTableHeights(profile);
   const verticalFromTable = Math.max(MIN_BOUND, profile.height * VERTICAL_RANGE_RATIO);
@@ -135,7 +143,8 @@ const calculateMovementLimits = (profile: TableSizeOption) => {
 
   return {
     x: horizontalLimit,
-    y: Math.min(verticalFromTable, glassHeadroom)
+    y: Math.min(verticalFromTable, glassHeadroom),
+    z: depthLimit
   } as const;
 };
 
@@ -144,12 +153,12 @@ const constrainPosition = (position: Vector3Tuple, tableSizeId: TableSizeId): Ve
   const heights = getTableHeights(profile);
   const limits = calculateMovementLimits(profile);
   const minY = heights.neonSurfaceY;
-  const maxY = minY + limits.y;
+  const currentZ = position[2] ?? 0;
 
   return [
     clamp(position[0], -limits.x, limits.x),
-    clamp(position[1], minY, maxY),
-    0
+    minY,
+    clamp(currentZ, -limits.z, limits.z)
   ] as Vector3Tuple;
 };
 
@@ -209,19 +218,9 @@ export const useDesignStore = create<DesignStoreState>()(
           return;
         }
 
-        const currentProfile = getTableProfile(currentSizeId);
-        const nextProfile = getTableProfile(sizeId);
-        const currentHeights = getTableHeights(currentProfile);
-        const nextHeights = getTableHeights(nextProfile);
-        const deltaY = nextHeights.neonSurfaceY - currentHeights.neonSurfaceY;
-
-        const nextShapes = state.history.present.shapes.map((shape) => {
-          const adjusted: NeonShape = {
-            ...shape,
-            position: [shape.position[0], shape.position[1] + deltaY, 0] as Vector3Tuple
-          };
-          return sanitizeShape(adjusted, sizeId);
-        });
+        const nextShapes = state.history.present.shapes.map((shape) =>
+          sanitizeShape(shape, sizeId)
+        );
 
         const next: DesignStateData = {
           ...state.history.present,
@@ -237,10 +236,7 @@ export const useDesignStore = create<DesignStoreState>()(
         const activeSizeId = resolveTableSizeId(state.history.present.tableSizeId);
         const profile = getTableProfile(activeSizeId);
         const heights = getTableHeights(profile);
-        const limits = calculateMovementLimits(profile);
-        const nextIndex = state.history.present.shapes.length;
-        const stackedYOffset = Math.min(nextIndex * STACK_SPACING, limits.y);
-        const rawPosition: Vector3Tuple = [shape.position[0], heights.neonSurfaceY + stackedYOffset, 0];
+        const rawPosition: Vector3Tuple = [shape.position[0], heights.neonSurfaceY, shape.position[2] ?? 0];
         const positionedShape = sanitizeShape(
           {
             ...shape,
@@ -347,12 +343,11 @@ export const useDesignStore = create<DesignStoreState>()(
           ...defaultDesign(),
           ...clone(data),
           tableSizeId: resolvedSizeId,
-          shapes: (data.shapes ?? []).map((shape, index) => {
-            const limits = calculateMovementLimits(profile);
+          shapes: (data.shapes ?? []).map((shape) => {
             const rawPosition: Vector3Tuple = [
               shape.position?.[0] ?? 0,
-              shape.position?.[1] ?? heights.neonSurfaceY + Math.min(index * STACK_SPACING, limits.y),
-              0
+              heights.neonSurfaceY,
+              shape.position?.[2] ?? 0
             ];
             const rawRotation: Vector3Tuple = [
               shape.rotation?.[0] ?? 0,
