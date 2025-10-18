@@ -1,10 +1,19 @@
 import type { Vector3Tuple } from 'three';
 import type { TableSizeId } from '../components/three/layers/tableDimensions';
 
-export type CanonicalShapeKind = 'v_shape' | 'single_peak' | 'zigzag_m' | 'text' | 'svg';
+export type CanonicalShapeKind =
+  | 'sharp_triangle'
+  | 'deep_v_shape'
+  | 'smooth_n_curve'
+  | 'sharp_m_shape'
+  | 'text'
+  | 'svg';
 
 export type ShapeKind =
   | CanonicalShapeKind
+  | 'v_shape'
+  | 'single_peak'
+  | 'zigzag_m'
   | 'line'
   | 'circle'
   | 'vshape'

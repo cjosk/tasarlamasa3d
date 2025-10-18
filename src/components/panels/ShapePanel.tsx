@@ -1,16 +1,18 @@
 import { useEffect, useRef, useState } from 'react';
-import { Activity, ChevronDown, Mountain, Trash2, Type } from 'lucide-react';
+import { BezierCurve, ChevronDown, LineSegments, Trash2, Triangle, Type } from 'lucide-react';
 import clsx from 'clsx';
 import { useDesignStore } from '../../state/designStore';
 
 const iconForKind = (kind: string) => {
   switch (kind) {
-    case 'v_shape':
+    case 'sharp_triangle':
+      return <Triangle className="h-4 w-4" />;
+    case 'deep_v_shape':
       return <ChevronDown className="h-4 w-4" />;
-    case 'single_peak':
-      return <Mountain className="h-4 w-4" />;
-    case 'zigzag_m':
-      return <Activity className="h-4 w-4" />;
+    case 'smooth_n_curve':
+      return <BezierCurve className="h-4 w-4" />;
+    case 'sharp_m_shape':
+      return <LineSegments className="h-4 w-4" />;
     case 'text':
       return <Type className="h-4 w-4" />;
     default:

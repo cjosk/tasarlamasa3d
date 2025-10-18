@@ -88,22 +88,27 @@ const pushHistory = (state: DesignStoreState['history'], next: DesignStateData) 
 };
 
 const KIND_ALIASES: Record<ShapeKind, CanonicalShapeKind> = {
-  v_shape: 'v_shape',
-  single_peak: 'single_peak',
-  zigzag_m: 'zigzag_m',
+  sharp_triangle: 'sharp_triangle',
+  deep_v_shape: 'deep_v_shape',
+  smooth_n_curve: 'smooth_n_curve',
+  sharp_m_shape: 'sharp_m_shape',
   text: 'text',
   svg: 'svg',
-  vshape: 'v_shape',
-  peak: 'single_peak',
-  zigzag: 'zigzag_m',
-  line: 'v_shape',
-  circle: 'single_peak'
+  v_shape: 'sharp_triangle',
+  vshape: 'sharp_triangle',
+  single_peak: 'deep_v_shape',
+  peak: 'deep_v_shape',
+  zigzag_m: 'sharp_m_shape',
+  zigzag: 'sharp_m_shape',
+  line: 'sharp_triangle',
+  circle: 'smooth_n_curve'
 };
 
 const LABEL_PRESETS: Record<CanonicalShapeKind, string> = {
-  v_shape: 'V Stroke',
-  single_peak: 'Peak',
-  zigzag_m: 'Zigzag',
+  sharp_triangle: 'Sharp Triangle',
+  deep_v_shape: 'Deep V',
+  smooth_n_curve: 'Smooth N',
+  sharp_m_shape: 'Sharp M',
   text: 'Neon Text',
   svg: 'Imported SVG'
 };
@@ -134,6 +139,7 @@ const constrainRotation = (rotation: Vector3Tuple): Vector3Tuple => [Math.PI, ro
 
 const sanitizeShape = (shape: NeonShape, tableSizeId: TableSizeId): NeonShape => ({
   ...shape,
+  kind: normalizeKind(shape.kind),
   thickness: NEON_THICKNESS,
   position: constrainPosition(shape.position, tableSizeId),
   rotation: constrainRotation(shape.rotation),
@@ -141,7 +147,7 @@ const sanitizeShape = (shape: NeonShape, tableSizeId: TableSizeId): NeonShape =>
   intensity: 1
 });
 
-const normalizeKind = (kind: ShapeKind): CanonicalShapeKind => KIND_ALIASES[kind] ?? 'v_shape';
+const normalizeKind = (kind: ShapeKind): CanonicalShapeKind => KIND_ALIASES[kind] ?? 'sharp_triangle';
 
 const createShape = (kind: ShapeKind, payload?: Partial<NeonShape>): NeonShape => {
   const canonicalKind = normalizeKind(kind);
@@ -333,9 +339,11 @@ export const useDesignStore = create<DesignStoreState>()(
               shape.rotation?.[1] ?? 0,
               shape.rotation?.[2] ?? 0
             ];
+            const canonicalKind = normalizeKind((shape.kind ?? 'sharp_triangle') as ShapeKind);
             return sanitizeShape(
               {
                 ...shape,
+                kind: canonicalKind,
                 thickness: NEON_THICKNESS,
                 position: rawPosition,
                 rotation: rawRotation

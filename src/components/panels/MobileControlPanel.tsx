@@ -1,7 +1,9 @@
 import { ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FolderOpen, MoveDown, MoveLeft, MoveRight, MoveUp, RotateCw, Trash2 } from 'lucide-react';
 import clsx from 'clsx';
+import { Canvas } from '@react-three/fiber';
 import type { Vector3Tuple } from 'three';
+import { TubeGeometry } from 'three';
 import {
   movementLimits,
   selectTableHeights,
@@ -9,18 +11,21 @@ import {
 } from '../../state/designStore';
 import { useDesignContext } from '../../providers/DesignProvider';
 import { NEON_PALETTE } from './ColorPicker';
-import type { ShapeKind } from '../../types/design';
+import type { CanonicalShapeKind } from '../../types/design';
 import type { TableSizeId } from '../three/layers/tableDimensions';
+import { createNeonCurve } from '../three/neonCurves';
 
 const POSITION_STEP = 0.05;
 const ROTATION_STEP = Math.PI / 12; // 15°
 const HOLD_INTERVAL_MS = 70;
+const PREVIEW_RADIUS = 0.017 / 2;
 
 const SHAPE_OPTIONS = [
-  { kind: 'v_shape', label: 'V SHAPE' },
-  { kind: 'single_peak', label: 'PEAK' },
-  { kind: 'zigzag_m', label: 'ZIGZAG' }
-] as const satisfies readonly { kind: ShapeKind; label: string }[];
+  { kind: 'sharp_triangle', label: 'Sharp Triangle' },
+  { kind: 'deep_v_shape', label: 'Deep V' },
+  { kind: 'smooth_n_curve', label: 'Smooth N' },
+  { kind: 'sharp_m_shape', label: 'Sharp M' }
+] as const satisfies readonly { kind: CanonicalShapeKind; label: string }[];
 
 type ShapeOption = (typeof SHAPE_OPTIONS)[number];
 
@@ -419,48 +424,47 @@ export const MobileControlPanel = () => {
           );
         })}
       </div>
-      <div className="grid grid-cols-3 gap-2">
-        {SHAPE_OPTIONS.map((option) => (
-          <button
-            key={option.kind}
-            type="button"
-            onClick={() => handleAddShape(option)}
-            className="flex min-h-[60px] items-center justify-center rounded-2xl border border-slate-800/60 bg-slate-900/80 px-2 text-[11px] font-bold uppercase tracking-[0.25em] text-slate-200 transition hover:border-neon-blue/70 hover:text-white active:scale-95"
-          >
-            {option.label}
-          </button>
-        ))}
+      <div className="grid grid-cols-4 gap-2">
+        {SHAPE_OPTIONS.map((option) => {
+          const isActive = selectedShape?.kind === option.kind;
+          return (
+            <button
+              key={option.kind}
+              type="button"
+              onClick={() => handleAddShape(option)}
+              className={clsx(
+                'relative flex items-center justify-center rounded-2xl border bg-slate-900/60 transition-all duration-150 ease-micro',
+                'border-slate-700/80 hover:border-neon-blue/60 active:scale-95',
+                isActive && 'ring-2 ring-neon-blue/50'
+              )}
+              aria-label={option.label}
+            >
+              <ShapePreview kind={option.kind} />
+              <span className="sr-only">{option.label}</span>
+            </button>
+          );
+        })}
       </div>
-      <div className="mt-2 flex justify-center">
-        <div className="flex max-w-full flex-nowrap items-center justify-center gap-3 overflow-x-auto px-1">
-          {NEON_PALETTE.map((color) => {
-            const isActive = selectedShape?.color?.toLowerCase() === color.toLowerCase();
-            const glowShadow = `0 0 12px ${color}80, 0 0 24px ${color}40`;
-            return (
-              <button
-                key={color}
-                type="button"
-                onClick={() => applyColor(color)}
-                disabled={!selectedId}
-                style={{
-                  backgroundColor: color,
-                  boxShadow: isActive
-                    ? `${glowShadow}, 0 0 0 3px rgba(15,23,42,0.95), 0 0 0 5px ${color}`
-                    : glowShadow
-                }}
-                className={clsx(
-                  'group h-10 w-10 rounded-full border-2 transition-transform duration-150 ease-micro',
-                  isActive ? 'border-neon-pink/80' : 'border-transparent',
-                  'hover:scale-105 active:scale-95',
-                  'disabled:cursor-not-allowed disabled:opacity-40'
-                )}
-                aria-label={`Rengi ${color} yap`}
-              >
-                <span className="pointer-events-none block h-full w-full rounded-full opacity-0 transition group-active:animate-ping group-active:opacity-70" />
-              </button>
-            );
-          })}
-        </div>
+      <div className="mt-3 flex flex-nowrap items-center justify-center gap-3 overflow-x-auto">
+        {NEON_PALETTE.map((color) => {
+          const isActive = selectedShape?.color?.toLowerCase() === color.toLowerCase();
+          return (
+            <button
+              key={color}
+              type="button"
+              onClick={() => applyColor(color)}
+              disabled={!selectedId}
+              style={{ backgroundColor: color }}
+              className={clsx(
+                'h-10 w-10 flex-shrink-0 rounded-full border transition-transform duration-150 ease-micro',
+                isActive ? 'border-neon-pink/80' : 'border-slate-700/70',
+                'hover:scale-105 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:scale-100'
+              )}
+              aria-label={`Rengi ${color} yap`}
+              aria-pressed={isActive}
+            />
+          );
+        })}
       </div>
       <div className="mt-4 flex flex-col gap-3">
         <span className="text-center text-[11px] uppercase tracking-[0.3em] text-slate-400">MASA BOYUTU</span>
@@ -508,5 +512,47 @@ export const MobileControlPanel = () => {
         </div>
       </div>
     </div>
+  );
+};
+
+const ShapePreview = ({ kind }: { kind: CanonicalShapeKind }) => {
+  const geometry = useMemo(() => {
+    const definition = createNeonCurve(kind);
+    if (!definition) return null;
+    return new TubeGeometry(definition.curve, definition.tubularSegments, PREVIEW_RADIUS, 18, false);
+  }, [kind]);
+
+  useEffect(() => {
+    return () => {
+      geometry?.dispose();
+    };
+  }, [geometry]);
+
+  if (!geometry) {
+    return (
+      <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-slate-900/70 text-[10px] uppercase tracking-[0.2em] text-slate-500">
+        N/A
+      </div>
+    );
+  }
+
+  return (
+    <Canvas
+      orthographic
+      camera={{ zoom: 55, position: [0, 0, 5] }}
+      className="h-16 w-16 rounded-xl bg-slate-900/70"
+      dpr={[1, 1.5]}
+      style={{ pointerEvents: 'none' }}
+    >
+      <ambientLight intensity={0.9} />
+      <mesh geometry={geometry} rotation={[Math.PI, 0, 0]}>
+        <meshStandardMaterial
+          color="#52B9FF"
+          emissive="#52B9FF"
+          emissiveIntensity={1}
+          toneMapped={false}
+        />
+      </mesh>
+    </Canvas>
   );
 };

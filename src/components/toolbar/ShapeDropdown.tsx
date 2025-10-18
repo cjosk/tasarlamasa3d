@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Activity, ChevronDown, ChevronUp, Mountain, Sparkles } from 'lucide-react';
+import { BezierCurve, ChevronDown, ChevronUp, LineSegments, Sparkles, Triangle } from 'lucide-react';
 import { useDesignStore } from '../../state/designStore';
 import type { ShapeKind } from '../../types/design';
 
@@ -10,9 +10,10 @@ interface ShapeOption {
 }
 
 const SHAPE_OPTIONS: ShapeOption[] = [
-  { kind: 'v_shape', label: 'V Shape', icon: <ChevronDown className="h-4 w-4" /> },
-  { kind: 'single_peak', label: 'Peak', icon: <Mountain className="h-4 w-4" /> },
-  { kind: 'zigzag_m', label: 'Zigzag', icon: <Activity className="h-4 w-4" /> }
+  { kind: 'sharp_triangle', label: 'Sharp Triangle', icon: <Triangle className="h-4 w-4" /> },
+  { kind: 'deep_v_shape', label: 'Deep V', icon: <ChevronDown className="h-4 w-4" /> },
+  { kind: 'smooth_n_curve', label: 'Smooth N', icon: <BezierCurve className="h-4 w-4" /> },
+  { kind: 'sharp_m_shape', label: 'Sharp M', icon: <LineSegments className="h-4 w-4" /> }
 ];
 
 export const ShapeDropdown = () => {
