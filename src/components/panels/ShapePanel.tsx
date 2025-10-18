@@ -71,6 +71,7 @@ export const ShapePanel = () => {
           ) : (
             design.shapes.map((shape) => {
               const isSelected = design.selectedId === shape.id;
+              const displayName = shape.name ?? shape.label;
               return (
                 <li key={shape.id} className="last:border-b-0">
                   <button
@@ -88,7 +89,7 @@ export const ShapePanel = () => {
                         {iconForKind(shape.kind)}
                       </span>
                       <div className="flex flex-col text-left">
-                        <span className="text-sm font-semibold">{shape.label}</span>
+                        <span className="text-sm font-semibold">{displayName}</span>
                         <span className="text-[11px] uppercase tracking-[0.25em] text-slate-400">{shape.kind}</span>
                       </div>
                     </div>

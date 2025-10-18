@@ -23,7 +23,7 @@ export const InspectorPanel = () => {
     <div className="flex h-full flex-col gap-4 rounded-3xl border border-slate-800/80 bg-slate-900/70 p-4 shadow-panel backdrop-blur-xl">
       <div>
         <h3 className="font-display text-sm font-semibold uppercase tracking-[0.3em] text-slate-400">Inspector</h3>
-        <p className="text-xs text-slate-500">Fine-tune the glow for {selectedShape.label}</p>
+        <p className="text-xs text-slate-500">Fine-tune the glow for {selectedShape.name ?? selectedShape.label}</p>
       </div>
       <div className="space-y-3">
         <label className="space-y-2">

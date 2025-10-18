@@ -110,13 +110,14 @@ export const ThreeCanvas = () => {
               target={cameraTarget}
               enablePan={false}
               enableRotate
-              enableZoom={false}
+              enableZoom
               minPolarAngle={Math.PI / 4}
               maxPolarAngle={(2 * Math.PI) / 3}
-              minDistance={2}
-              maxDistance={10}
+              minDistance={2.5}
+              maxDistance={14}
               enableDamping
               dampingFactor={0.1}
+              zoomSpeed={0.6}
             />
             {performance === 'high' && (
               <EffectComposer multisampling={4} autoClear>

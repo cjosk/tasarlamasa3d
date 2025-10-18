@@ -23,6 +23,7 @@ export type ShapeKind =
 export interface NeonShape {
   id: string;
   kind: CanonicalShapeKind;
+  name: string;
   label: string;
   color: string;
   intensity: number;

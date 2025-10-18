@@ -24,6 +24,7 @@ interface DesignStoreState {
     present: DesignStateData;
     future: DesignStateData[];
   };
+  shapeCounter: number;
   onboardingStep: number;
   performance: 'high' | 'eco';
   transformMode: 'translate' | 'rotate' | 'scale';
@@ -164,37 +165,85 @@ const constrainPosition = (position: Vector3Tuple, tableSizeId: TableSizeId): Ve
 
 const constrainRotation = (rotation: Vector3Tuple): Vector3Tuple => [Math.PI, rotation[1], 0];
 
-const sanitizeShape = (shape: NeonShape, tableSizeId: TableSizeId): NeonShape => ({
-  ...shape,
-  kind: normalizeKind(shape.kind),
-  thickness: NEON_THICKNESS,
-  position: constrainPosition(shape.position, tableSizeId),
-  rotation: constrainRotation(shape.rotation),
-  glowRadius: 1,
-  intensity: 1
-});
+const sanitizeShape = (shape: NeonShape, tableSizeId: TableSizeId): NeonShape => {
+  const canonicalKind = normalizeKind(shape.kind);
+  const fallbackLabel = shape.label ?? shape.name ?? LABEL_PRESETS[canonicalKind];
+  const fallbackName = shape.name ?? fallbackLabel;
+  const sourcePosition = (shape.position ?? [0, 0, 0]) as Vector3Tuple;
+  const sourceRotation = (shape.rotation ?? [Math.PI, 0, 0]) as Vector3Tuple;
+  const clampedPosition = constrainPosition(sourcePosition, tableSizeId);
+  const constrainedRotation = constrainRotation(sourceRotation);
+
+  return {
+    ...shape,
+    kind: canonicalKind,
+    label: fallbackLabel,
+    name: fallbackName,
+    thickness: NEON_THICKNESS,
+    position: clampedPosition,
+    rotation: constrainedRotation,
+    glowRadius: 1,
+    intensity: 1,
+    scale: (shape.scale ?? [1, 1, 1]) as Vector3Tuple,
+    animated: shape.animated ?? true
+  };
+};
 
 const normalizeKind = (kind: ShapeKind): CanonicalShapeKind => KIND_ALIASES[kind] ?? 'sharp_triangle';
 
+const extractShapeCounter = (value?: string): number => {
+  if (!value) {
+    return Number.NaN;
+  }
+  const match = value.match(/Şekil\s*#(\d+)/i);
+  if (!match) {
+    return Number.NaN;
+  }
+  const parsed = Number.parseInt(match[1], 10);
+  return Number.isFinite(parsed) ? parsed : Number.NaN;
+};
+
+const deriveNextShapeCounter = (shapes: NeonShape[]): number => {
+  let maxCounter = 0;
+  shapes.forEach((shape, index) => {
+    const candidates = [extractShapeCounter(shape.name), extractShapeCounter(shape.label)];
+    const valid = candidates.find((value) => Number.isFinite(value));
+    const numericValue = typeof valid === 'number' && Number.isFinite(valid) ? valid : index + 1;
+    if (numericValue > maxCounter) {
+      maxCounter = numericValue;
+    }
+  });
+  return maxCounter + 1;
+};
+
 const createShape = (kind: ShapeKind, payload?: Partial<NeonShape>): NeonShape => {
   const canonicalKind = normalizeKind(kind);
+  const baseLabel = LABEL_PRESETS[canonicalKind];
   const base: NeonShape = {
     id: nanoid(),
     kind: canonicalKind,
-    label: `${LABEL_PRESETS[canonicalKind]} #${Math.floor(Math.random() * 900 + 100)}`,
+    label: baseLabel,
+    name: baseLabel,
     color: '#52B9FF',
     intensity: 1,
     thickness: NEON_THICKNESS,
     glowRadius: 1,
     position: [0, 0, 0],
-    rotation: [0, 0, 0],
+    rotation: [Math.PI, 0, 0],
     scale: [1, 1, 1],
     animated: true
   };
 
   const { kind: _ignoredKind, ...restPayload } = payload ?? {};
+  const merged = { ...base, ...restPayload } as NeonShape;
+  const finalLabel = (payload?.label ?? merged.label ?? baseLabel) as string;
+  const finalName = (payload?.name ?? merged.name ?? finalLabel) as string;
 
-  return { ...base, ...restPayload };
+  return {
+    ...merged,
+    label: finalLabel,
+    name: finalName
+  };
 };
 
 export const useDesignStore = create<DesignStoreState>()(
@@ -204,6 +253,7 @@ export const useDesignStore = create<DesignStoreState>()(
       present: defaultDesign(),
       future: []
     },
+    shapeCounter: 1,
     onboardingStep: 0,
     performance: 'high',
     transformMode: 'translate',
@@ -232,7 +282,10 @@ export const useDesignStore = create<DesignStoreState>()(
       }),
     addShape: (kind, payload) =>
       set((state) => {
-        const shape = createShape(kind, payload);
+        const shapeLabel = `Şekil #${state.shapeCounter}`;
+        state.shapeCounter += 1;
+        const shapePayload: Partial<NeonShape> = { ...(payload ?? {}), label: shapeLabel, name: shapeLabel };
+        const shape = createShape(kind, shapePayload);
         const activeSizeId = resolveTableSizeId(state.history.present.tableSizeId);
         const profile = getTableProfile(activeSizeId);
         const heights = getTableHeights(profile);
@@ -368,6 +421,7 @@ export const useDesignStore = create<DesignStoreState>()(
           })
         };
         state.performance = normalized.performance;
+        state.shapeCounter = deriveNextShapeCounter(normalized.shapes);
         state.history = {
           past: [],
           present: normalized,
@@ -381,6 +435,7 @@ export const useDesignStore = create<DesignStoreState>()(
           present: defaultDesign(),
           future: []
         };
+        state.shapeCounter = 1;
       }),
     setLoading: (loading) => set(() => ({ loading })),
     setError: (message) => set(() => ({ error: message })),

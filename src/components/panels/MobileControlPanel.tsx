@@ -306,6 +306,7 @@ export const MobileControlPanel = () => {
             ) : (
               shapes.map((shape) => {
                 const isSelected = shape.id === selectedId;
+                const displayName = shape.name ?? shape.label;
                 return (
                   <li key={shape.id} className="last:border-b-0">
                     <button
@@ -318,7 +319,7 @@ export const MobileControlPanel = () => {
                           : 'text-slate-200 hover:bg-slate-800/70 hover:text-white'
                       )}
                     >
-                      <span className="truncate font-semibold uppercase tracking-[0.25em]">{shape.label}</span>
+                      <span className="truncate font-semibold uppercase tracking-[0.25em]">{displayName}</span>
                       <Trash2
                         className="h-4 w-4 text-slate-500 transition hover:text-rose-400"
                         onClick={(event) => {
