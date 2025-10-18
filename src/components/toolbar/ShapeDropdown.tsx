@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Activity, ChevronDown, ChevronUp, Mountain, Sparkles, Type } from 'lucide-react';
+import { Activity, ChevronDown, ChevronUp, Mountain, Sparkles } from 'lucide-react';
 import { useDesignStore } from '../../state/designStore';
 import type { ShapeKind } from '../../types/design';
 
@@ -12,8 +12,7 @@ interface ShapeOption {
 const SHAPE_OPTIONS: ShapeOption[] = [
   { kind: 'v_shape', label: 'V Shape', icon: <ChevronDown className="h-4 w-4" /> },
   { kind: 'single_peak', label: 'Peak', icon: <Mountain className="h-4 w-4" /> },
-  { kind: 'zigzag_m', label: 'Zigzag', icon: <Activity className="h-4 w-4" /> },
-  { kind: 'text', label: 'Text', icon: <Type className="h-4 w-4" /> }
+  { kind: 'zigzag_m', label: 'Zigzag', icon: <Activity className="h-4 w-4" /> }
 ];
 
 export const ShapeDropdown = () => {
@@ -22,17 +21,6 @@ export const ShapeDropdown = () => {
   const advanceOnboarding = useDesignStore((state) => state.advanceOnboarding);
 
   const handleAdd = (option: ShapeOption) => {
-    if (option.kind === 'text') {
-      const text = prompt('Enter neon text');
-      if (!text) {
-        return;
-      }
-      addShape('text', { text, label: text.slice(0, 12) });
-      advanceOnboarding();
-      setOpen(false);
-      return;
-    }
-
     addShape(option.kind);
     advanceOnboarding();
     setOpen(false);

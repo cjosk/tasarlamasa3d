@@ -31,7 +31,7 @@ export const DesignerPage = () => {
   const showStatus = useMemo(() => loading || Boolean(error), [error, loading]);
 
   return (
-    <div className="relative flex h-[calc(100vh-5rem)] flex-col">
+    <div className="relative flex min-h-[calc(100vh-5rem)] flex-col">
       <div className="relative z-30 px-4 pt-4">
         <Toolbar />
       </div>
@@ -41,7 +41,7 @@ export const DesignerPage = () => {
           {error && <span className="text-rose-400">{error}</span>}
         </div>
       )}
-      <div className="grid flex-1 gap-4 px-4 pb-6 pt-4 lg:grid-cols-[280px_minmax(0,1fr)_280px]">
+      <div className="hidden flex-1 gap-4 px-4 pb-6 pt-4 lg:grid lg:grid-cols-[280px_minmax(0,1fr)_280px]">
         <div className="hidden lg:block">
           <ShapePanel />
         </div>
@@ -62,14 +62,34 @@ export const DesignerPage = () => {
           <PreviewToggle />
         </div>
       </div>
-      <div className="space-y-4 px-4 pb-[18rem] lg:hidden">
-        <ShapePanel />
-        <TableSizePanel />
-        <InspectorPanel />
-        <GlassControlPanel />
-        <PreviewToggle />
+      <div className="lg:hidden flex flex-1 flex-col overflow-hidden pb-[45vh]">
+        <div className="px-3 pt-1 pb-1">
+          <div className="relative h-[55vh] overflow-hidden rounded-3xl border border-slate-800/80 bg-slate-900/70 shadow-panel">
+            <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex justify-between px-4 py-3 text-xs text-slate-400">
+              <span>{design.title}</span>
+              <span>{authUser?.displayName ?? 'Designer'}</span>
+            </div>
+            <ThreeCanvas />
+            <OnboardingGuide />
+          </div>
+        </div>
       </div>
-      <MobileControlPanel />
+      <div className="pointer-events-none lg:hidden">
+        <div className="pointer-events-auto fixed inset-x-0 bottom-0 z-40">
+          <div className="mx-auto w-full max-w-xl rounded-t-3xl border-t border-slate-800/60 bg-slate-900/70 shadow-2xl shadow-slate-900/40 backdrop-blur-xl">
+            <div className="max-h-[45vh] overflow-y-auto px-4 pt-4 pb-8 space-y-6">
+              <MobileControlPanel />
+              <div className="space-y-4 pb-6">
+                <ShapePanel />
+                <TableSizePanel />
+                <InspectorPanel />
+                <GlassControlPanel />
+                <PreviewToggle />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
