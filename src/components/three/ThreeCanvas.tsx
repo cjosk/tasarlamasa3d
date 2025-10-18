@@ -23,8 +23,13 @@ export const ThreeCanvas = () => {
   const tableProfile = useDesignStore(selectTableProfile);
   const shapes = design.shapes;
   const orbitControlsRef = useRef<OrbitControlsImpl | null>(null);
-  const cameraPosition = useMemo(() => [0, 12, 45] as const, []);
-  const cameraTarget = useMemo(() => [0, 10, 0] as const, []);
+  const cameraPosition = useMemo(() => [0, 8, 55] as const, []);
+  const cameraTarget = useMemo(() => [0, 8, 0] as const, []);
+  const polarClamp = useMemo(() => {
+    const base = Math.PI / 2;
+    const allowance = Math.PI / 18; // allow roughly ±10° of vertical orbit play
+    return { min: base - allowance, max: base + allowance } as const;
+  }, []);
 
   const bloomConfig = useMemo(
     () => ({
@@ -101,8 +106,8 @@ export const ThreeCanvas = () => {
               ref={orbitControlsRef}
               target={cameraTarget}
               enablePan={false}
-              minPolarAngle={Math.PI / 5}
-              maxPolarAngle={(2 * Math.PI) / 3}
+              minPolarAngle={polarClamp.min}
+              maxPolarAngle={polarClamp.max}
               minDistance={8}
               maxDistance={18}
               enableDamping
